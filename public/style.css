@@ -47,6 +47,11 @@ body {
   padding: 1.5rem;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 
+  &.highlight {
+    background: #f0faf4;
+    border: 1.5px solid #4caf82;
+  }
+
   & .name {
     font-size: 1.1rem;
     font-weight: 600;
