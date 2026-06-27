@@ -10,10 +10,13 @@
     ></script>
     <title>Shopping Cart</title>
   </head>
+
   <body data-signals="{cartCount: 0}">
     <section class="cart">
+      <span data-show="!$cartCount">Your cart is empty</span>
       <span
         class="item-count"
+        data-show="$cartCount"
         data-text="'Cart: ' + $cartCount + ' item' + ($cartCount === 1 ? '' : 's')"
       ></span>
     </section>
@@ -21,6 +24,7 @@
     <section class="products">
       <article
         class="product-card"
+        data-class:highlight="$inCart1"
         data-signals="{name1: 'Mechanical Keyboard', description1: 'Clicky tactile switches, TKL layout', price1: 89.99, qty1: 1, inCart1: false}"
         data-computed:line-total1="$price1 * $qty1"
       >
@@ -32,7 +36,10 @@
           <input type="number" data-bind:qty1 />
           <button data-on:click="$qty1 < 10 && $qty1++">+</button>
         </div>
-        <span class="line-total" data-text="'Total: $' + $lineTotal1.toFixed(2)"></span>
+        <span
+          class="line-total"
+          data-text="'Total: $' + $lineTotal1.toFixed(2)"
+        ></span>
         <button
           class="add-to-cart"
           data-on:click="!$inCart1 && ($cartCount++, $inCart1 = true)"
@@ -43,7 +50,8 @@
 
       <article
         class="product-card"
-        data-signals="{name2: 'USB-C Hub', description2: '7-in-1 hub with 4K HDMI and 100W PD', price2: 49.99, qty2: 1, inCart2: false}"
+        data-class:highlight="$inCart2"
+        data-signals="{name2: 'Wireless Mouse', description2: 'Ergonomic design, 3-month battery life', price2: 49.99, qty2: 1, inCart2: false}"
         data-computed:line-total2="$price2 * $qty2"
       >
         <span class="name" data-text="$name2"></span>
@@ -54,7 +62,10 @@
           <input type="number" data-bind:qty2 />
           <button data-on:click="$qty2 < 10 && $qty2++">+</button>
         </div>
-        <span class="line-total" data-text="'Total: $' + $lineTotal2.toFixed(2)"></span>
+        <span
+          class="line-total"
+          data-text="'Total: $' + $lineTotal2.toFixed(2)"
+        ></span>
         <button
           class="add-to-cart"
           data-on:click="!$inCart2 && ($cartCount++, $inCart2 = true)"
@@ -65,7 +76,8 @@
 
       <article
         class="product-card"
-        data-signals="{name3: 'Wireless Mouse', description3: 'Ergonomic design, 2.4GHz receiver', price3: 34.99, qty3: 1, inCart3: false}"
+        data-class:highlight="$inCart3"
+        data-signals="{name3: 'USB-C Monitor', description3: '27-inch 4K display, 60Hz refresh rate', price3: 349.99, qty3: 1, inCart3: false}"
         data-computed:line-total3="$price3 * $qty3"
       >
         <span class="name" data-text="$name3"></span>
@@ -76,7 +88,10 @@
           <input type="number" data-bind:qty3 />
           <button data-on:click="$qty3 < 10 && $qty3++">+</button>
         </div>
-        <span class="line-total" data-text="'Total: $' + $lineTotal3.toFixed(2)"></span>
+        <span
+          class="line-total"
+          data-text="'Total: $' + $lineTotal3.toFixed(2)"
+        ></span>
         <button
           class="add-to-cart"
           data-on:click="!$inCart3 && ($cartCount++, $inCart3 = true)"
