@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.2/bundles/datastar.js"
+    ></script>
+    <title>Shopping Cart</title>
+  </head>
+  <body data-signals="{cartCount: 0}">
+    <section class="cart">
+      <span
+        class="item-count"
+        data-text="'Cart: ' + $cartCount + ' item' + ($cartCount === 1 ? '' : 's')"
+      ></span>
+    </section>
+
+    <section class="products">
+      <article
+        class="product-card"
+        data-signals="{name1: 'Mechanical Keyboard', description1: 'Clicky tactile switches, TKL layout', price1: 89.99, qty1: 1, inCart1: false}"
+        data-computed:line-total1="$price1 * $qty1"
+      >
+        <span class="name" data-text="$name1"></span>
+        <span class="description" data-text="$description1"></span>
+        <span class="price" data-text="'$' + $price1.toFixed(2)"></span>
+        <div class="quantity-control">
+          <button data-on:click="$qty1 > 1 && $qty1--">-</button>
+          <input type="number" data-bind:qty1 />
+          <button data-on:click="$qty1 < 10 && $qty1++">+</button>
+        </div>
+        <span class="line-total" data-text="'Total: $' + $lineTotal1.toFixed(2)"></span>
+        <button
+          class="add-to-cart"
+          data-on:click="!$inCart1 && ($cartCount++, $inCart1 = true)"
+          data-attr:disabled="$inCart1"
+          data-text="$inCart1 ? 'Added' : 'Add to Cart'"
+        ></button>
+      </article>
+
+      <article
+        class="product-card"
+        data-signals="{name2: 'USB-C Hub', description2: '7-in-1 hub with 4K HDMI and 100W PD', price2: 49.99, qty2: 1, inCart2: false}"
+        data-computed:line-total2="$price2 * $qty2"
+      >
+        <span class="name" data-text="$name2"></span>
+        <span class="description" data-text="$description2"></span>
+        <span class="price" data-text="'$' + $price2.toFixed(2)"></span>
+        <div class="quantity-control">
+          <button data-on:click="$qty2 > 1 && $qty2--">-</button>
+          <input type="number" data-bind:qty2 />
+          <button data-on:click="$qty2 < 10 && $qty2++">+</button>
+        </div>
+        <span class="line-total" data-text="'Total: $' + $lineTotal2.toFixed(2)"></span>
+        <button
+          class="add-to-cart"
+          data-on:click="!$inCart2 && ($cartCount++, $inCart2 = true)"
+          data-attr:disabled="$inCart2"
+          data-text="$inCart2 ? 'Added' : 'Add to Cart'"
+        ></button>
+      </article>
+
+      <article
+        class="product-card"
+        data-signals="{name3: 'Wireless Mouse', description3: 'Ergonomic design, 2.4GHz receiver', price3: 34.99, qty3: 1, inCart3: false}"
+        data-computed:line-total3="$price3 * $qty3"
+      >
+        <span class="name" data-text="$name3"></span>
+        <span class="description" data-text="$description3"></span>
+        <span class="price" data-text="'$' + $price3.toFixed(2)"></span>
+        <div class="quantity-control">
+          <button data-on:click="$qty3 > 1 && $qty3--">-</button>
+          <input type="number" data-bind:qty3 />
+          <button data-on:click="$qty3 < 10 && $qty3++">+</button>
+        </div>
+        <span class="line-total" data-text="'Total: $' + $lineTotal3.toFixed(2)"></span>
+        <button
+          class="add-to-cart"
+          data-on:click="!$inCart3 && ($cartCount++, $inCart3 = true)"
+          data-attr:disabled="$inCart3"
+          data-text="$inCart3 ? 'Added' : 'Add to Cart'"
+        ></button>
+      </article>
+    </section>
+
+    <pre class="json-signals" data-json-signals=""></pre>
+  </body>
+</html>
