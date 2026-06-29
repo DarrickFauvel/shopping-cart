@@ -38,6 +38,8 @@ Open http://localhost:3000.
 ## Features
 
 - Products loaded from Turso on page init via SSE signal patch
+- Add new products via form — server inserts into Turso and pushes new card to the DOM via `patchElements`
+- Product cards implemented as a light DOM web component (`<product-card card-id="N">`)
 - Add items to cart with quantity controls
 - Line totals and cart count update reactively
 - Scroll-reveal animation on product cards (`data-on-intersect`)

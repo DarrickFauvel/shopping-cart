@@ -31,7 +31,8 @@ Datastar is loaded from CDN:
 
 | Route | Method | What it does |
 |---|---|---|
-| `/products` | GET | Queries Turso, patches `name/description/price` signals for all 3 cards via SSE |
+| `/products` | GET | Queries Turso, patches `name/description/price` signals for all cards via SSE |
+| `/products/add` | POST | Reads form signals, inserts into Turso, patches new signals + prepends `<product-card>` via `patchElements` |
 | `/cart/save` | POST | Reads signal state, logs it, patches `saved: true` via SSE |
 
 **Key SDK gotcha:** `stream.patchSignals()` expects a JSON string, not an object:
@@ -40,6 +41,16 @@ stream.patchSignals(JSON.stringify({ key: value }))
 ```
 
 **Key HTML gotcha:** Use `data-init="@get('/products')"` on `<body>` to fetch on load — `data-on:load` misses the event because Datastar's module script defers past it.
+
+## Web component
+
+`public/product-card.js` defines a `<product-card card-id="N">` light DOM custom element. It must be loaded **before** Datastar's script so `connectedCallback` renders the card's HTML before Datastar initializes.
+
+`data-signals` in the component declares all per-card state including `name/description/price` (as empty/zero defaults). The server populates them via `patchSignals`.
+
+When `patchElements` prepends a new `<product-card>`, the browser fires `connectedCallback`, which sets `innerHTML`. Datastar picks up the new reactive attributes via MutationObserver. The `/products/add` endpoint sends `patchElements` first (so `connectedCallback` sets safe defaults), then `patchSignals` overrides with the real values.
+
+**Key gotcha:** `express.json()` middleware consumes the request body stream before `readSignals` can read it, causing the handler to hang. Do not use `express.json()` on routes that call `readSignals`.
 
 ## Datastar patterns used
 
