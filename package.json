@@ -1,5 +1,8 @@
 {
   "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
   "devDependencies": {
     "playwright": "^1.61.1"
   },
