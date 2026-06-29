@@ -56,6 +56,17 @@ app.post('/products/add', async (req, res) => {
   })
 })
 
+app.delete('/products/:id', async (req, res) => {
+  const { id } = req.params
+  await db.execute({ sql: 'DELETE FROM products WHERE id = ?', args: [id] })
+  await ServerSentEventGenerator.stream(req, res, (stream) => {
+    stream.patchElements('', {
+      selector: `product-card[card-id="${id}"]`,
+      mode: 'remove',
+    })
+  })
+})
+
 app.post('/cart/save', async (req, res) => {
   const { success, signals, error } = await ServerSentEventGenerator.readSignals(req)
   if (!success) return res.status(400).send(error)
