@@ -28,6 +28,33 @@ app.get('/products', async (req, res) => {
   })
 })
 
+app.post('/products/add', async (req, res) => {
+  const { success, signals, error } = await ServerSentEventGenerator.readSignals(req)
+  if (!success) return res.status(400).send(error)
+
+  const { newName, newDescription, newPrice } = signals
+  const result = await db.execute({
+    sql: 'INSERT INTO products (name, description, price) VALUES (?, ?, ?) RETURNING id',
+    args: [newName, newDescription, Number(newPrice)],
+  })
+  const id = result.rows[0].id
+
+  await ServerSentEventGenerator.stream(req, res, (stream) => {
+    stream.patchSignals(JSON.stringify({
+      [`name${id}`]: newName,
+      [`description${id}`]: newDescription,
+      [`price${id}`]: Number(newPrice),
+      newName: '',
+      newDescription: '',
+      newPrice: 0,
+    }))
+    stream.patchElements(`<product-card card-id="${id}"></product-card>`, {
+      selector: '.products',
+      mode: 'prepend',
+    })
+  })
+})
+
 app.post('/cart/save', async (req, res) => {
   const { success, signals, error } = await ServerSentEventGenerator.readSignals(req)
   if (!success) return res.status(400).send(error)

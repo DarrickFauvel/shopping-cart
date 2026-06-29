@@ -26,14 +26,19 @@
       ></span>
     </section>
 
+    <section
+      class="add-product"
+      data-signals="{newName: '', newDescription: '', newPrice: ''}"
+    >
+      <input type="text" placeholder="Name" data-bind:newName />
+      <input type="text" placeholder="Description" data-bind:newDescription />
+      <input type="number" placeholder="Price" data-bind:newPrice />
+      <button data-on:click="@post('/products/add')">Add Product</button>
+    </section>
+
     <section class="products">
-      <!-- Card 1 -->
       <product-card card-id="1"></product-card>
-
-      <!-- Card 2 -->
       <product-card card-id="2"></product-card>
-
-      <!-- Card 3 -->
       <product-card card-id="3"></product-card>
 
       <button data-indicator:saving data-on:click="@post('/cart/save')">
