@@ -40,6 +40,7 @@
         <span
           data-text="'Sale ends in: ' + Math.floor($countdown1 / 60) + ':' + String($countdown1 % 60).padStart(2, '0')"
           data-show="$countdown1 > 0"
+          data-style:color="$countdown1 > 60 ? 'green' : $countdown1 > 10 ? 'orange' : 'red'"
         ></span>
         <span class="price" data-text="'$' + $price1.toFixed(2)"></span>
         <span data-text="'Original: $' + $originalPrice1"></span>
