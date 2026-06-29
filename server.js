@@ -1,38 +1,40 @@
-import { createServer } from 'node:http'
-import { readFile } from 'node:fs/promises'
-import { extname, join } from 'node:path'
+import { createClient } from '@libsql/client'
+import { config } from 'dotenv'
+import express from 'express'
 import { ServerSentEventGenerator } from '@starfederation/datastar-sdk/node'
 
-const MIME = {
-  '.html': 'text/html',
-  '.css': 'text/css',
-  '.js': 'application/javascript',
-}
+config()
 
-const server = createServer(async (req, res) => {
-  if (req.method === 'POST' && req.url === '/cart/save') {
-    const { success, signals, error } = await ServerSentEventGenerator.readSignals(req)
-    if (!success) {
-      res.writeHead(400)
-      res.end(error)
-      return
-    }
-    console.log('Cart saved:', JSON.stringify(signals))
-    await ServerSentEventGenerator.stream(req, res, (stream) => {
-      stream.patchSignals(JSON.stringify({ saved: true }))
-    })
-    return
-  }
-
-  const filePath = join('public', req.url === '/' ? 'index.html' : req.url)
-  try {
-    const data = await readFile(filePath)
-    res.writeHead(200, { 'Content-Type': MIME[extname(filePath)] ?? 'application/octet-stream' })
-    res.end(data)
-  } catch {
-    res.writeHead(404)
-    res.end('Not found')
-  }
+const db = createClient({
+  url: process.env.TURSO_DATABASE_URL,
+  authToken: process.env.TURSO_AUTH_TOKEN,
 })
 
-server.listen(3000, () => console.log('Server running at http://localhost:3000'))
+const app = express()
+app.use(express.json())
+app.use(express.static('public'))
+
+app.get('/products', async (req, res) => {
+  const { rows } = await db.execute('SELECT id, name, description, price FROM products ORDER BY id')
+  await ServerSentEventGenerator.stream(req, res, (stream) => {
+    const signals = {}
+    for (const row of rows) {
+      const i = row.id
+      signals[`name${i}`] = row.name
+      signals[`description${i}`] = row.description
+      signals[`price${i}`] = row.price
+    }
+    stream.patchSignals(JSON.stringify(signals))
+  })
+})
+
+app.post('/cart/save', async (req, res) => {
+  const { success, signals, error } = await ServerSentEventGenerator.readSignals(req)
+  if (!success) return res.status(400).send(error)
+  console.log('Cart saved:', JSON.stringify(signals))
+  await ServerSentEventGenerator.stream(req, res, (stream) => {
+    stream.patchSignals(JSON.stringify({ saved: true }))
+  })
+})
+
+app.listen(3000, () => console.log('Server running at http://localhost:3000'))

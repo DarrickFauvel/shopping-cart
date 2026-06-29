@@ -14,6 +14,7 @@
   <body
     data-signals="{cartCount: 0, saving: false, saved: false}"
     data-effect="document.title = 'Shopping Cart' + ($cartCount ? ' (' + $cartCount + ')' : '')"
+    data-init="@get('/products')"
   >
     <section class="cart">
       <span data-show="!$cartCount">Your cart is empty</span>
@@ -28,7 +29,7 @@
       <!-- Card 1 -->
       <article
         class="product-card"
-        data-signals="{name1: 'Mechanical Keyboard', description1: 'Clicky tactile switches, TKL layout', price1: 89.99, qty1: 1, inCart1: false, originalPrice1: 0, qtyInput1: null, visible1: false, countdown1: 300}"
+        data-signals="{name1: '', description1: '', price1: 0, qty1: 1, inCart1: false, originalPrice1: 0, qtyInput1: null, visible1: false, countdown1: 300}"
         data-init="$originalPrice1 = $price1"
         data-class="{highlight: $inCart1, visible: $visible1}"
         data-computed:line-total1="$price1 * $qty1"
@@ -65,7 +66,7 @@
       <article
         class="product-card"
         data-class="{highlight: $inCart2, visible: $visible2}"
-        data-signals="{name2: 'Wireless Mouse', description2: 'Ergonomic design, 3-month battery life', price2: 49.99, qty2: 1, inCart2: false, qtyInput2: null, visible2: false}"
+        data-signals="{name2: '', description2: '', price2: 0, qty2: 1, inCart2: false, qtyInput2: null, visible2: false}"
         data-computed:line-total2="$price2 * $qty2"
         data-on-intersect__once="$visible2 = true"
       >
@@ -93,7 +94,7 @@
       <article
         class="product-card"
         data-class="{highlight: $inCart3, visible: $visible3}"
-        data-signals="{name3: 'USB-C Monitor', description3: '27-inch 4K display, 60Hz refresh rate', price3: 349.99, qty3: 1, inCart3: false, qtyInput3: null, visible3: false}"
+        data-signals="{name3: '', description3: '', price3: 0, qty3: 1, inCart3: false, qtyInput3: null, visible3: false}"
         data-computed:line-total3="$price3 * $qty3"
         data-on-intersect__once="$visible3 = true"
       >
