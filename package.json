@@ -7,6 +7,9 @@
     "playwright": "^1.61.1"
   },
   "dependencies": {
-    "@starfederation/datastar-sdk": "^1.0.0"
+    "@libsql/client": "^0.17.4",
+    "@starfederation/datastar-sdk": "^1.0.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
   }
 }
