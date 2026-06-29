@@ -12,7 +12,7 @@
   </head>
 
   <body
-    data-signals="{cartCount: 0}"
+    data-signals="{cartCount: 0, saving: false, saved: false}"
     data-effect="document.title = 'Shopping Cart' + ($cartCount ? ' (' + $cartCount + ')' : '')"
   >
     <section class="cart">
@@ -116,6 +116,12 @@
           data-text="$inCart3 ? 'Added' : 'Add to Cart'"
         ></button>
       </article>
+
+      <button data-indicator:saving data-on:click="@post('/cart/save')">
+        Save Cart
+      </button>
+      <span data-show="$saving">Saving...</span>
+      <span data-show="$saved && !$saving">Saved!</span>
     </section>
 
     <pre class="json-signals" data-json-signals=""></pre>
