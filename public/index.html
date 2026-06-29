@@ -13,10 +13,26 @@
   </head>
 
   <body
-    data-signals="{cartCount: 0, saving: false, saved: false}"
-    data-effect="document.title = 'Shopping Cart' + ($cartCount ? ' (' + $cartCount + ')' : '')"
+    data-signals="{cartCount: 0, saving: false, saved: false, theme: 'dark', themeAnimate: false}"
+    data-effect="document.title = 'Shopping Cart' + ($cartCount ? ' (' + $cartCount + ')' : ''); document.documentElement.dataset.theme = $theme"
     data-init="@get('/products')"
   >
+    <header class="title-bar">
+      <h1>Shopping Cart</h1>
+      <span>using Datastar</span>
+      <button
+        class="theme-toggle"
+        data-on:click="$theme = $theme === 'dark' ? 'light' : 'dark'; $themeAnimate = true"
+      ><span
+          class="toggle-icon"
+          data-text="$theme === 'dark' ? '☀' : '☾'"
+          data-class="{spin: $themeAnimate}"
+          data-on:animationend="$themeAnimate = false"
+        ></span>
+        <span data-text="$theme === 'dark' ? ' Light' : ' Dark'"></span>
+      </button>
+    </header>
+
     <section class="cart">
       <span data-show="!$cartCount">Your cart is empty</span>
       <span
@@ -45,7 +61,5 @@
       <span data-show="$saving">Saving...</span>
       <span data-show="$saved && !$saving">Saved!</span>
     </section>
-
-    <pre class="json-signals" data-json-signals=""></pre>
   </body>
 </html>
