@@ -5,18 +5,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Running the app
 
 ```bash
-node server.js
+npm install
+node scripts/seed.js   # first time only
+npm start
 ```
 
-The app runs at `http://localhost:3000`.
+The app runs at `http://localhost:3000`. Requires a `.env` file with `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`.
 
 ## Architecture
 
-Three files make up the app:
-
 - `public/index.html` — all markup and reactive logic
 - `public/style.css` — all styles (uses CSS nesting)
-- `server.js` — Node.js HTTP server (serves static files + backend endpoints)
+- `server.js` — Express server (static files + SSE endpoints)
+- `scripts/seed.js` — creates and seeds the `products` table in Turso
 
 Datastar is loaded from CDN:
 
@@ -26,12 +27,19 @@ Datastar is loaded from CDN:
 
 ## Backend
 
-`server.js` uses `@starfederation/datastar-sdk` (Node.js adapter) to handle SSE responses.
+`server.js` uses Express + `@starfederation/datastar-sdk` (Node.js adapter) + `@libsql/client` for Turso.
 
-- `POST /cart/save` — reads signal state from the request body via `ServerSentEventGenerator.readSignals()`, then streams a `datastar-patch-signals` SSE event back patching `saved: true`
-- All other requests are served as static files from `public/`
+| Route | Method | What it does |
+|---|---|---|
+| `/products` | GET | Queries Turso, patches `name/description/price` signals for all 3 cards via SSE |
+| `/cart/save` | POST | Reads signal state, logs it, patches `saved: true` via SSE |
 
-SSE responses must use `ServerSentEventGenerator.stream()` and `stream.patchSignals(JSON.stringify({...}))` — the SDK expects a JSON string, not an object.
+**Key SDK gotcha:** `stream.patchSignals()` expects a JSON string, not an object:
+```js
+stream.patchSignals(JSON.stringify({ key: value }))
+```
+
+**Key HTML gotcha:** Use `data-init="@get('/products')"` on `<body>` to fetch on load — `data-on:load` misses the event because Datastar's module script defers past it.
 
 ## Datastar patterns used
 
