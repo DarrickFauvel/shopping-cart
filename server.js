@@ -24,6 +24,8 @@ app.get('/products', async (req, res) => {
       signals[`price${i}`] = row.price
     }
     stream.patchSignals(JSON.stringify(signals))
+    const cards = rows.map(row => `<product-card card-id="${row.id}"></product-card>`).join('')
+    stream.patchElements(cards, { selector: '#product-list', mode: 'inner' })
   })
 })
 
@@ -48,7 +50,7 @@ app.post('/products/add', async (req, res) => {
       newPrice: 0,
     }))
     stream.patchElements(`<product-card card-id="${id}"></product-card>`, {
-      selector: '.products',
+      selector: '#product-list',
       mode: 'prepend',
     })
   })
