@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="style.css" />
+    <script type="module" src="./portfolio-drawer.js"></script>
     <script type="module" src="./product-card.js"></script>
     <script
       type="module"
@@ -61,5 +62,15 @@
       <span data-show="$saving">Saving...</span>
       <span data-show="$saved && !$saving">Saved!</span>
     </section>
+    <portfolio-drawer>
+      <script type="application/json">
+      [
+        { "label": "Node.js + Express", "note": "REST API + SSE endpoints"      },
+        { "label": "Turso / libSQL",    "note": "Edge SQLite database"           },
+        { "label": "CSS Nesting",       "note": "Native scoped styles"           },
+        { "label": "Light/Dark Mode",   "note": "Datastar signal + CSS vars"     }
+      ]
+      </script>
+    </portfolio-drawer>
   </body>
 </html>
