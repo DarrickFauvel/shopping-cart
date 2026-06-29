@@ -30,9 +30,9 @@
       class="add-product"
       data-signals="{newName: '', newDescription: '', newPrice: ''}"
     >
-      <input type="text" placeholder="Name" data-bind:newName />
-      <input type="text" placeholder="Description" data-bind:newDescription />
-      <input type="number" placeholder="Price" data-bind:newPrice />
+      <input type="text" placeholder="Name" data-bind:new-name />
+      <input type="text" placeholder="Description" data-bind:new-description />
+      <input type="number" data-bind:new-price />
       <button data-on:click="@post('/products/add')">Add Product</button>
     </section>
 
