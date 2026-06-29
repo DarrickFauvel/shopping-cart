@@ -1,0 +1,9 @@
+{
+  "type": "module",
+  "devDependencies": {
+    "playwright": "^1.61.1"
+  },
+  "dependencies": {
+    "@starfederation/datastar-sdk": "^1.0.0"
+  }
+}
