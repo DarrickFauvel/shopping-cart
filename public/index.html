@@ -36,11 +36,9 @@
       <button data-on:click="@post('/products/add')">Add Product</button>
     </section>
 
-    <section class="products">
-      <product-card card-id="1"></product-card>
-      <product-card card-id="2"></product-card>
-      <product-card card-id="3"></product-card>
+    <div id="product-list"></div>
 
+    <section class="cart-actions">
       <button data-indicator:saving data-on:click="@post('/cart/save')">
         Save Cart
       </button>
