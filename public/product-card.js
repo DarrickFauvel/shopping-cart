@@ -4,7 +4,7 @@ class ProductCard extends HTMLElement {
     this.innerHTML = `
       <article
         class="product-card"
-        data-signals="{name${i}: '', description${i}: '', price${i}: 0, qty${i}: 1, inCart${i}: false, originalPrice${i}: 0, qtyInput${i}: null, visible${i}: false, countdown${i}: 300}"
+        data-signals="{qty${i}: 1, inCart${i}: false, originalPrice${i}: 0, qtyInput${i}: null, visible${i}: false, countdown${i}: 300}"
         data-init="$originalPrice${i} = $price${i}"
         data-class="{highlight: $inCart${i}, visible: $visible${i}}"
         data-computed:line-total${i}="$price${i} * $qty${i}"
