@@ -28,14 +28,19 @@
       <!-- Card 1 -->
       <article
         class="product-card"
-        data-signals="{name1: 'Mechanical Keyboard', description1: 'Clicky tactile switches, TKL layout', price1: 89.99, qty1: 1, inCart1: false, originalPrice1: 0, qtyInput1: null, visible1: false}"
+        data-signals="{name1: 'Mechanical Keyboard', description1: 'Clicky tactile switches, TKL layout', price1: 89.99, qty1: 1, inCart1: false, originalPrice1: 0, qtyInput1: null, visible1: false, countdown1: 300}"
         data-init="$originalPrice1 = $price1"
         data-class="{highlight: $inCart1, visible: $visible1}"
         data-computed:line-total1="$price1 * $qty1"
         data-on-intersect__once="$visible1 = true"
+        data-on-interval="$countdown1 > 0 && $countdown1--"
       >
         <span class="name" data-text="$name1"></span>
         <span class="description" data-text="$description1"></span>
+        <span
+          data-text="'Sale ends in: ' + Math.floor($countdown1 / 60) + ':' + String($countdown1 % 60).padStart(2, '0')"
+          data-show="$countdown1 > 0"
+        ></span>
         <span class="price" data-text="'$' + $price1.toFixed(2)"></span>
         <span data-text="'Original: $' + $originalPrice1"></span>
         <div class="quantity-control">
@@ -83,7 +88,7 @@
         ></button>
       </article>
 
-      <!-- Card3 -->
+      <!-- Card 3 -->
       <article
         class="product-card"
         data-class="{highlight: $inCart3, visible: $visible3}"
