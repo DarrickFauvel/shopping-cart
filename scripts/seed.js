@@ -35,9 +35,7 @@ await db.execute({
     (3, 'USB-C Monitor',       '27-inch 4K display, 60Hz refresh rate',    349.99, NULL,  NULL, 'tech'),
     (4, 'Whole Milk',          'Organic, 1 gallon, grass-fed',               5.49, NULL,  NULL, 'groceries'),
     (5, 'Free-Range Eggs',     'One dozen, cage-free, Grade A',              6.99, NULL,  NULL, 'groceries'),
-    (6, 'Sourdough Bread',     'Artisan loaf, stone-baked',                  7.49, NULL,  NULL, 'groceries'),
-    (7, 'Honeycrisp Apples',   '3 lb bag, locally sourced',                  5.99, NULL,  NULL, 'groceries'),
-    (8, 'Ground Coffee',       'Medium roast, single-origin, 12 oz',        13.99, NULL,  NULL, 'groceries')`,
+    (6, 'Sourdough Bread',     'Artisan loaf, stone-baked',                  7.49, NULL,  NULL, 'groceries')`,
   args: [kbEndsAt, mouseEndsAt],
 })
 
