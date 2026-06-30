@@ -6,7 +6,7 @@ class ProductCard extends HTMLElement {
         class="product-card"
         data-signals__ifmissing="{name${i}: '', description${i}: '', price${i}: 0, qty${i}: 1, inCart${i}: false, originalPrice${i}: 0, visible${i}: false, countdown${i}: 300}"
         data-init="$originalPrice${i} = $price${i}"
-        data-class="{highlight: $inCart${i}, visible: $visible${i}, incart: $inCart${i}}"
+        data-class="{highlight: $inCart${i}, visible: $visible${i}}"
         data-computed:line-total${i}="$price${i} * $qty${i}"
         data-on-intersect__once="$visible${i} = true"
         data-on-interval="$countdown${i} > 0 && $countdown${i}--"

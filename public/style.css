@@ -17,6 +17,11 @@
 
   --danger: #dc2626;
   --danger-hover: #b91c1c;
+
+  --btn-grad-end: #1d4ed8;
+  --btn-shadow: rgba(37, 99, 235, 0.35);
+  --btn-shadow-hover: rgba(37, 99, 235, 0.55);
+  --btn-disabled-text: #1a1828;
 }
 
 :root[data-theme="light"] {
@@ -30,11 +35,15 @@
   --text-dim: #5e5a8a;
   --primary-light: #3730a3;
   --primary-muted: #4338ca;
+
+  --btn-grad-end: #1e40af;
+  --btn-shadow: rgba(37, 99, 235, 0.2);
+  --btn-shadow-hover: rgba(37, 99, 235, 0.35);
+  --btn-disabled-text: #4c4580;
 }
 
-*,
-*::before,
-*::after {
+/* Zero-specificity reset so component transitions always win */
+:where(*, *::before, *::after) {
   box-sizing: border-box;
   margin: 0;
   transition:
@@ -49,6 +58,12 @@ body {
   font-size: 1rem;
   background: var(--bg);
   color: var(--text);
+}
+
+/* Shared danger-hover for any remove/clear button */
+:is(.remove-from-cart, .clear-cart):hover {
+  color: var(--danger);
+  border-color: var(--danger);
 }
 
 /* Title bar */
@@ -96,6 +111,21 @@ body {
       &.spin {
         animation: icon-fade-in 0.3s ease;
       }
+    }
+  }
+
+  :root[data-theme="light"] & {
+    background: #4f46e5;
+    border-bottom-color: #4338ca;
+
+    & h1 { color: #ffffff; }
+    & span { color: #ddd6fe; }
+
+    & .theme-toggle {
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.5);
+
+      &:hover { background: rgba(255, 255, 255, 0.15); color: #ffffff; }
     }
   }
 }
@@ -313,8 +343,6 @@ fieldset {
     padding: 0.4rem 0.9rem;
     font-size: 0.85rem;
     cursor: pointer;
-
-    &:hover { color: var(--danger); border-color: var(--danger); }
   }
 
   & .cart-total {
@@ -339,8 +367,6 @@ fieldset {
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
 }
-
-/* Products */
 
 .products {
   margin-bottom: 2rem;
@@ -373,14 +399,23 @@ fieldset {
     transform: translateY(0);
   }
 
+  /* Dim card when item is in cart, detected via DOM state */
+  &:has(.card-added:not(.collapsed)) {
+    opacity: 0.75;
+  }
+
   & .name {
     font-size: 1.1rem;
     font-weight: 600;
   }
 
-  & .description {
+  /* Shared muted-text style */
+  & :is(.description, .line-total) {
     font-size: 0.875rem;
     color: var(--text-muted);
+  }
+
+  & .description {
     max-height: 60px;
     overflow: hidden;
     transition: max-height 0.3s ease, opacity 0.25s ease;
@@ -432,30 +467,46 @@ fieldset {
     }
   }
 
-  & .line-total {
-    font-size: 0.875rem;
-    color: var(--text-muted);
+  /* Shared collapse behaviour for collapsible card sections */
+  & :is(.card-details, .card-added) {
+    overflow: hidden;
+
+    &.collapsed {
+      max-height: 0;
+      opacity: 0;
+    }
   }
 
   & .add-to-cart {
     margin-top: auto;
-    padding: 0.6rem 1rem;
-    background: var(--primary);
+    padding: 0.65rem 1.1rem;
+    background: linear-gradient(135deg, var(--primary), var(--btn-grad-end));
     color: #fff;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 0.9rem;
-    font-weight: 500;
+    font-weight: 600;
+    letter-spacing: 0.02em;
     cursor: pointer;
+    box-shadow: 0 2px 8px var(--btn-shadow);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
 
     &:hover:not(:disabled) {
-      background: var(--primary-hover);
+      background: linear-gradient(135deg, var(--primary-hover), var(--btn-grad-end));
+      box-shadow: 0 4px 16px var(--btn-shadow-hover);
+      transform: translateY(-1px);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px var(--btn-shadow);
     }
 
     &:disabled {
       background: var(--primary-disabled);
-      color: #1a1828;
+      color: var(--btn-disabled-text);
       cursor: default;
+      box-shadow: none;
     }
   }
 
@@ -464,17 +515,7 @@ fieldset {
     flex-direction: column;
     gap: 0.75rem;
     max-height: 320px;
-    overflow: hidden;
     transition: max-height 0.4s ease, opacity 0.3s ease;
-
-    &.collapsed {
-      max-height: 0;
-      opacity: 0;
-    }
-  }
-
-  &.incart {
-    opacity: 0.75;
   }
 
   & .card-added {
@@ -482,13 +523,7 @@ fieldset {
     align-items: center;
     gap: 0.75rem;
     max-height: 60px;
-    overflow: hidden;
     transition: max-height 0.35s ease, opacity 0.3s ease;
-
-    &.collapsed {
-      max-height: 0;
-      opacity: 0;
-    }
   }
 
   & .remove-from-cart {
@@ -499,8 +534,6 @@ fieldset {
     padding: 0.25rem 0.6rem;
     font-size: 0.78rem;
     cursor: pointer;
-
-    &:hover { color: var(--danger); border-color: var(--danger); }
   }
 
   & .added-badge {
@@ -514,21 +547,5 @@ fieldset {
     border-radius: 999px;
     font-size: 0.82rem;
     font-weight: 500;
-  }
-}
-
-
-:root[data-theme="light"] .title-bar {
-  background: #4f46e5;
-  border-bottom-color: #4338ca;
-
-  & h1 { color: #ffffff; }
-  & span { color: #ddd6fe; }
-
-  & .theme-toggle {
-    color: #ffffff;
-    border-color: rgba(255, 255, 255, 0.5);
-
-    &:hover { background: rgba(255, 255, 255, 0.15); color: #ffffff; }
   }
 }
