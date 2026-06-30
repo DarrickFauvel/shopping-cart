@@ -60,7 +60,7 @@ app.get('/products', async (req, res) => {
 
   // Auto-reinstate expired sales for demo (2-min countdown)
   const now = Math.floor(Date.now() / 1000)
-  const REINSTATE_SECS = 120
+  const REINSTATE_SECS = 20
   for (const p of products) {
     if (p.sale_price != null && (p.sale_ends_at == null || p.sale_ends_at <= now)) {
       p.sale_ends_at = now + REINSTATE_SECS

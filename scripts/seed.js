@@ -9,8 +9,8 @@ const db = createClient({
 })
 
 const now = Math.floor(Date.now() / 1000)
-const kbEndsAt = now + 300   // 5 min
-const mouseEndsAt = now + 600 // 10 min
+const kbEndsAt = now + 60    // 1 min
+const mouseEndsAt = now + 90  // 1.5 min
 
 await db.executeMultiple(`
   DROP TABLE IF EXISTS products;
