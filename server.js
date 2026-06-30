@@ -22,11 +22,15 @@ app.use(express.static('public'))
 
 const cartTotalHtml = (ids) => {
   const expr = ids.map(id => `($inCart${id} ? $price${id} * $qty${id} : 0)`).join(' + ')
-  return `<span class="cart-total" data-show="$cartCount" data-text="'Total: $' + (${expr}).toFixed(2)"></span>`
+  return `<span class="cart-total" data-class="{shown: $cartCount}" data-text="'Total: $' + (${expr}).toFixed(2)"></span>`
 }
 
 const cartItemHtml = (id) =>
-  `<li id="cart-item-${id}" class="cart-item" data-show="$inCart${id}">
+  `<li id="cart-item-${id}" class="cart-item"
+    data-signals__ifmissing="{cartHiding${id}: false}"
+    data-class="{hidden: !$inCart${id} || $cartHiding${id}}"
+    data-on:transitionend="$cartHiding${id} && ($inCart${id} = false, $cartHiding${id} = false)"
+  >
     <div class="cart-item-header">
       <span class="cart-item-name" data-text="$name${id}"></span>
       <button class="cart-item-remove" data-on:click="$cartCount--, $inCart${id} = false, @delete('/cart/${id}')" aria-label="Remove from cart"><svg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14H6L5 6'/><path d='M10 11v6'/><path d='M14 11v6'/><path d='M9 6V4h6v2'/></svg><span class="cart-item-tooltip">Remove from cart</span></button>
@@ -73,36 +77,6 @@ app.get('/products', async (req, res) => {
   })
 })
 
-app.post('/products/add', async (req, res) => {
-  const { success, signals, error } = await ServerSentEventGenerator.readSignals(req)
-  if (!success) return res.status(400).send(error)
-
-  const { newName, newDescription, newPrice } = signals
-  const result = await db.execute({
-    sql: 'INSERT INTO products (name, description, price) VALUES (?, ?, ?) RETURNING id',
-    args: [newName, newDescription, Number(newPrice)],
-  })
-  const id = result.rows[0].id
-
-  const { rows: allProducts } = await db.execute('SELECT id FROM products')
-
-  await ServerSentEventGenerator.stream(req, res, (stream) => {
-    stream.patchElements(`<product-card card-id="${id}"></product-card>`, {
-      selector: '#product-list',
-      mode: 'prepend',
-    })
-    stream.patchSignals(JSON.stringify({
-      [`name${id}`]: newName,
-      [`description${id}`]: newDescription,
-      [`price${id}`]: Number(newPrice),
-      newName: '',
-      newDescription: '',
-      newPrice: 0,
-    }))
-    stream.patchElements(cartItemHtml(id), { selector: '#cart-list', mode: 'prepend' })
-    stream.patchElements(cartTotalHtml(allProducts.map(p => p.id)), { selector: '#cart-total', mode: 'inner' })
-  })
-})
 
 app.post('/cart/add/:id', async (req, res) => {
   const { id } = req.params
@@ -122,50 +96,13 @@ app.delete('/cart/:id', async (req, res) => {
   await ServerSentEventGenerator.stream(req, res, () => {})
 })
 
-app.delete('/products/:id', async (req, res) => {
-  const { id } = req.params
-  await Promise.all([
-    db.execute({ sql: 'DELETE FROM products WHERE id = ?', args: [id] }),
-    db.execute({ sql: 'DELETE FROM cart WHERE product_id = ?', args: [id] }),
-  ])
+app.delete('/cart', async (req, res) => {
+  const { rows: cartRows } = await db.execute('SELECT product_id FROM cart')
+  await db.execute('DELETE FROM cart')
   await ServerSentEventGenerator.stream(req, res, (stream) => {
-    stream.patchElements('', { selector: `product-card[card-id="${id}"]`, mode: 'remove' })
-    stream.patchElements('', { selector: `#cart-item-${id}`, mode: 'remove' })
-  })
-})
-
-const SEED_PRODUCTS = [
-  { id: 1, name: 'Mechanical Keyboard', description: 'Clicky tactile switches, TKL layout', price: 89.99 },
-  { id: 2, name: 'Wireless Mouse', description: 'Ergonomic design, 3-month battery life', price: 49.99 },
-  { id: 3, name: 'USB-C Monitor', description: '27-inch 4K display, 60Hz refresh rate', price: 349.99 },
-]
-
-app.post('/db/reseed', async (req, res) => {
-  await db.executeMultiple(`
-    DELETE FROM cart;
-    DELETE FROM products;
-    INSERT INTO products (id, name, description, price) VALUES
-      (1, 'Mechanical Keyboard', 'Clicky tactile switches, TKL layout', 89.99),
-      (2, 'Wireless Mouse', 'Ergonomic design, 3-month battery life', 49.99),
-      (3, 'USB-C Monitor', '27-inch 4K display, 60Hz refresh rate', 349.99);
-  `)
-  await ServerSentEventGenerator.stream(req, res, (stream) => {
-    const cards = SEED_PRODUCTS.map(p => `<product-card card-id="${p.id}"></product-card>`).join('')
-    stream.patchElements(cards, { selector: '#product-list', mode: 'inner' })
-    const signals = { reseedConfirming: false, cartCount: 0 }
-    for (const p of SEED_PRODUCTS) {
-      signals[`name${p.id}`] = p.name
-      signals[`description${p.id}`] = p.description
-      signals[`price${p.id}`] = p.price
-      signals[`inCart${p.id}`] = false
-      signals[`qty${p.id}`] = 1
-      signals[`countdown${p.id}`] = 300
-      signals[`confirming${p.id}`] = false
-    }
+    const signals = { cartCount: 0 }
+    for (const r of cartRows) signals[`cartHiding${r.product_id}`] = true
     stream.patchSignals(JSON.stringify(signals))
-    const cartItems = SEED_PRODUCTS.map(p => cartItemHtml(p.id)).join('')
-    stream.patchElements(cartItems, { selector: '#cart-list', mode: 'inner' })
-    stream.patchElements(cartTotalHtml(SEED_PRODUCTS.map(p => p.id)), { selector: '#cart-total', mode: 'inner' })
   })
 })
 

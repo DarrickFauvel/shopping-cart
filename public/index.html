@@ -14,7 +14,7 @@
   </head>
 
   <body
-    data-signals="{cartCount: 0, theme: 'dark', themeAnimate: false, reseedConfirming: false}"
+    data-signals="{cartCount: 0, theme: 'dark', themeAnimate: false}"
     data-effect="document.title = 'Shopping Cart' + ($cartCount ? ' (' + $cartCount + ')' : ''); document.documentElement.dataset.theme = $theme"
     data-init="@get('/products')"
   >
@@ -37,35 +37,12 @@
     <main>
       <fieldset class="cart">
         <legend>Cart</legend>
-        <span class="cart-empty" data-show="!$cartCount">Your cart is empty</span>
-        <ul id="cart-list" data-show="$cartCount"></ul>
-        <div id="cart-total"></div>
-      </fieldset>
-
-      <fieldset
-        class="add-product"
-        data-signals="{newName: '', newDescription: '', newPrice: 0}"
-      >
-        <legend>Add Product</legend>
-        <div class="float-label">
-          <label for="new-name" data-class="{floating: !!$newName}">Name</label>
-          <input id="new-name" type="text" data-bind:new-name />
-        </div>
-        <div class="float-label">
-          <label for="new-description" data-class="{floating: !!$newDescription}">Description</label>
-          <input id="new-description" type="text" data-bind:new-description />
-        </div>
-        <div class="float-label">
-          <label for="new-price" class="floating">Price</label>
-          <input id="new-price" type="number" min="0" data-bind:new-price />
-        </div>
-        <button data-on:click="@post('/products/add')">Add Product</button>
-        <div class="reseed-wrap">
-          <button class="reseed" data-show="!$reseedConfirming" data-on:click="$reseedConfirming = true">Restore Products</button>
-          <div class="reseed-confirm" data-show="$reseedConfirming">
-            <span>Restore initial products?</span>
-            <button class="reseed-yes" data-on:click="@post('/db/reseed')">Reset</button>
-            <button class="reseed-no" data-on:click="$reseedConfirming = false">Cancel</button>
+        <span class="cart-empty" data-class="{shown: !$cartCount}">Your cart is empty</span>
+        <div class="cart-body" data-class="{empty: !$cartCount}">
+          <ul id="cart-list"></ul>
+          <div class="cart-footer" data-class="{shown: $cartCount}">
+            <button class="clear-cart" data-on:click="@delete('/cart')">Clear cart</button>
+            <div id="cart-total"></div>
           </div>
         </div>
       </fieldset>
