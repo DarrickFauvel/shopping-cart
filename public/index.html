@@ -40,14 +40,6 @@
         <span class="cart-empty" data-show="!$cartCount">Your cart is empty</span>
         <ul id="cart-list" data-show="$cartCount"></ul>
         <div id="cart-total"></div>
-        <div class="cart-footer">
-          <button class="reseed" data-show="!$reseedConfirming" data-on:click="$reseedConfirming = true">Restore Products</button>
-          <div class="reseed-confirm" data-show="$reseedConfirming">
-            <span>Restore initial products?</span>
-            <button class="reseed-yes" data-on:click="@post('/db/reseed')">Reset</button>
-            <button class="reseed-no" data-on:click="$reseedConfirming = false">Cancel</button>
-          </div>
-        </div>
       </fieldset>
 
       <fieldset
@@ -68,6 +60,14 @@
           <input id="new-price" type="number" min="0" data-bind:new-price />
         </div>
         <button data-on:click="@post('/products/add')">Add Product</button>
+        <div class="reseed-wrap">
+          <button class="reseed" data-show="!$reseedConfirming" data-on:click="$reseedConfirming = true">Restore Products</button>
+          <div class="reseed-confirm" data-show="$reseedConfirming">
+            <span>Restore initial products?</span>
+            <button class="reseed-yes" data-on:click="@post('/db/reseed')">Reset</button>
+            <button class="reseed-no" data-on:click="$reseedConfirming = false">Cancel</button>
+          </div>
+        </div>
       </fieldset>
 
       <section class="products">
