@@ -272,7 +272,23 @@ fieldset {
       align-items: center;
       gap: 0.75rem;
 
+      & .sale-chip {
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        padding: 0.1rem 0.35rem;
+        border-radius: 3px;
+        background: #16a34a;
+        color: #fff;
+      }
+
       & .cart-item-unit { color: var(--text-muted); font-size: 0.85rem; }
+
+      & .cart-item-was {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-decoration: line-through;
+      }
 
       & .cart-item-qty-control {
         display: flex;
@@ -426,10 +442,33 @@ fieldset {
     }
   }
 
+  & .price-area {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  & .sale-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    background: #16a34a;
+    color: #fff;
+  }
+
   & .price {
     font-size: 1.25rem;
     font-weight: 700;
     color: var(--primary-light);
+  }
+
+  & .original-price {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-decoration: line-through;
   }
 
   & .quantity-control {
