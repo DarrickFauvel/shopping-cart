@@ -13,9 +13,11 @@ const db = createClient({
 await db.execute(`
   CREATE TABLE IF NOT EXISTS cart (
     product_id INTEGER PRIMARY KEY,
-    qty INTEGER NOT NULL
+    qty INTEGER NOT NULL,
+    cart_price REAL NOT NULL DEFAULT 0
   )
 `)
+try { await db.execute('ALTER TABLE cart ADD COLUMN cart_price REAL NOT NULL DEFAULT 0') } catch {}
 
 try { await db.execute('ALTER TABLE products ADD COLUMN sale_price REAL') } catch {}
 try { await db.execute('ALTER TABLE products ADD COLUMN sale_ends_at INTEGER') } catch {}
@@ -24,7 +26,7 @@ const app = express()
 app.use(express.static('public'))
 
 const cartTotalHtml = (ids) => {
-  const expr = ids.map(id => `($inCart${id} ? $price${id} * $qty${id} : 0)`).join(' + ')
+  const expr = ids.map(id => `($inCart${id} ? $cartPrice${id} * $qty${id} : 0)`).join(' + ')
   return `<span class="cart-total" data-class="{shown: $cartCount}" data-text="'Total: $' + (${expr}).toFixed(2)"></span>`
 }
 
@@ -40,23 +42,23 @@ const cartItemHtml = (id) =>
     </div>
     <div class="cart-item-controls">
       <span class="sale-chip" data-show="$originalPrice${id} > 0">SALE</span>
-      <span class="cart-item-unit" data-text="'$' + $price${id}.toFixed(2)"></span>
+      <span class="cart-item-unit" data-text="'$' + $cartPrice${id}.toFixed(2)"></span>
       <span class="cart-item-was" data-show="$originalPrice${id} > 0" data-text="'was $' + $originalPrice${id}.toFixed(2)"></span>
       <div class="cart-item-qty-control">
         <button data-on:click="$qty${id} > 1 && ($qty${id}--, @post('/cart/add/${id}'))">-</button>
         <input type="number" data-bind:qty${id} data-on:change="@post('/cart/add/${id}')" />
         <button data-on:click="$qty${id} < 10 && ($qty${id}++, @post('/cart/add/${id}'))">+</button>
       </div>
-      <span class="cart-item-total" data-text="'$' + ($price${id} * $qty${id}).toFixed(2)"></span>
+      <span class="cart-item-total" data-text="'$' + ($cartPrice${id} * $qty${id}).toFixed(2)"></span>
     </div>
   </li>`
 
 app.get('/products', async (req, res) => {
   const [{ rows: products }, { rows: cartRows }] = await Promise.all([
     db.execute('SELECT id, name, description, price, sale_price, sale_ends_at FROM products ORDER BY id'),
-    db.execute('SELECT product_id, qty FROM cart'),
+    db.execute('SELECT product_id, qty, cart_price FROM cart'),
   ])
-  const savedCart = Object.fromEntries(cartRows.map(r => [r.product_id, r.qty]))
+  const savedCart = Object.fromEntries(cartRows.map(r => [r.product_id, { qty: r.qty, cartPrice: r.cart_price }]))
 
   // Auto-reinstate expired sales for demo (2-min countdown)
   const now = Math.floor(Date.now() / 1000)
@@ -83,7 +85,8 @@ app.get('/products', async (req, res) => {
       signals[`countdown${p.id}`] = saleActive ? p.sale_ends_at - now : 0
       if (savedCart[p.id] !== undefined) {
         signals[`inCart${p.id}`] = true
-        signals[`qty${p.id}`] = savedCart[p.id]
+        signals[`qty${p.id}`] = savedCart[p.id].qty
+        signals[`cartPrice${p.id}`] = savedCart[p.id].cartPrice
         cartCount++
       }
     }
@@ -124,9 +127,10 @@ app.post('/cart/add/:id', async (req, res) => {
   const { success, signals, error } = await ServerSentEventGenerator.readSignals(req)
   if (!success) return res.status(400).send(error)
   const qty = signals[`qty${id}`] ?? 1
+  const cartPrice = signals[`cartPrice${id}`] ?? signals[`price${id}`] ?? 0
   await db.execute({
-    sql: 'INSERT OR REPLACE INTO cart (product_id, qty) VALUES (?, ?)',
-    args: [id, qty],
+    sql: 'INSERT OR REPLACE INTO cart (product_id, qty, cart_price) VALUES (?, ?, ?)',
+    args: [id, qty, cartPrice],
   })
   await ServerSentEventGenerator.stream(req, res, () => {})
 })
