@@ -14,7 +14,7 @@
   </head>
 
   <body
-    data-signals="{cartCount: 0, theme: 'dark', themeAnimate: false}"
+    data-signals="{cartCount: 0, theme: 'dark', themeAnimate: false, cartId: 'default', groceryCartId: ''}"
     data-effect="document.title = 'Shopping Cart' + ($cartCount ? ' (' + $cartCount + ')' : ''); document.documentElement.dataset.theme = $theme"
     data-init="@get('/products')"
   >
@@ -35,6 +35,26 @@
     </header>
 
     <main>
+      <nav class="cart-nav">
+        <button
+          class="cart-tab"
+          data-class="{active: $cartId === 'default'}"
+          data-on:click="$cartId = 'default', @get('/products')"
+        >Main Cart</button>
+        <button
+          class="cart-tab"
+          data-show="$groceryCartId !== ''"
+          data-class="{active: $cartId === $groceryCartId}"
+          data-on:click="$cartId = $groceryCartId, @get('/products')"
+          data-text="$groceryCartId"
+        ></button>
+        <button
+          class="cart-tab cart-tab--new"
+          data-show="$groceryCartId === ''"
+          data-on:click="@post('/carts/new')"
+        >+ New Cart</button>
+      </nav>
+
       <fieldset class="cart">
         <legend>Cart</legend>
         <span class="cart-empty" data-class="{shown: !$cartCount}">Your cart is empty</span>
