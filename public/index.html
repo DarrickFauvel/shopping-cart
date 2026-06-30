@@ -45,11 +45,20 @@
 
     <section
       class="add-product"
-      data-signals="{newName: '', newDescription: '', newPrice: ''}"
+      data-signals="{newName: '', newDescription: '', newPrice: 0}"
     >
-      <input type="text" placeholder="Name" data-bind:new-name />
-      <input type="text" placeholder="Description" data-bind:new-description />
-      <input type="number" data-bind:new-price />
+      <div class="float-label">
+        <label for="new-name" data-class="{floating: !!$newName}">Name</label>
+        <input id="new-name" type="text" data-bind:new-name />
+      </div>
+      <div class="float-label">
+        <label for="new-description" data-class="{floating: !!$newDescription}">Description</label>
+        <input id="new-description" type="text" data-bind:new-description />
+      </div>
+      <div class="float-label">
+        <label for="new-price" class="floating">Price</label>
+        <input id="new-price" type="number" min="0" data-bind:new-price />
+      </div>
       <button data-on:click="@post('/products/add')">Add Product</button>
     </section>
 
