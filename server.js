@@ -96,6 +96,29 @@ app.get('/products', async (req, res) => {
 })
 
 
+app.get('/products/refresh', async (req, res) => {
+  const { rows: products } = await db.execute('SELECT id, price, sale_price, sale_ends_at FROM products ORDER BY id')
+  const now = Math.floor(Date.now() / 1000)
+  const REINSTATE_SECS = 20
+  for (const p of products) {
+    if (p.sale_price != null && (p.sale_ends_at == null || p.sale_ends_at <= now)) {
+      p.sale_ends_at = now + REINSTATE_SECS
+      await db.execute({ sql: 'UPDATE products SET sale_ends_at = ? WHERE id = ?', args: [p.sale_ends_at, p.id] })
+    }
+  }
+  await ServerSentEventGenerator.stream(req, res, (stream) => {
+    const signals = {}
+    for (const p of products) {
+      const saleActive = p.sale_price != null && p.sale_ends_at != null && p.sale_ends_at > now
+      signals[`price${p.id}`] = saleActive ? p.sale_price : p.price
+      signals[`originalPrice${p.id}`] = saleActive ? p.price : 0
+      signals[`countdown${p.id}`] = saleActive ? p.sale_ends_at - now : 0
+      signals[`saleRestart${p.id}`] = 0
+    }
+    stream.patchSignals(JSON.stringify(signals))
+  })
+})
+
 app.post('/cart/add/:id', async (req, res) => {
   const { id } = req.params
   const { success, signals, error } = await ServerSentEventGenerator.readSignals(req)
