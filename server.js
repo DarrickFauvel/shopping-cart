@@ -58,12 +58,21 @@ app.get('/products', async (req, res) => {
   ])
   const savedCart = Object.fromEntries(cartRows.map(r => [r.product_id, r.qty]))
 
+  // Auto-reinstate expired sales for demo (2-min countdown)
+  const now = Math.floor(Date.now() / 1000)
+  const REINSTATE_SECS = 120
+  for (const p of products) {
+    if (p.sale_price != null && (p.sale_ends_at == null || p.sale_ends_at <= now)) {
+      p.sale_ends_at = now + REINSTATE_SECS
+      await db.execute({ sql: 'UPDATE products SET sale_ends_at = ? WHERE id = ?', args: [p.sale_ends_at, p.id] })
+    }
+  }
+
   await ServerSentEventGenerator.stream(req, res, (stream) => {
     if (!products.length) return
     const cards = products.map(p => `<product-card card-id="${p.id}"></product-card>`).join('')
     stream.patchElements(cards, { selector: '#product-list', mode: 'inner' })
     const signals = {}
-    const now = Math.floor(Date.now() / 1000)
     let cartCount = 0
     for (const p of products) {
       const saleActive = p.sale_price != null && p.sale_ends_at != null && p.sale_ends_at > now
