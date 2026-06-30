@@ -9,8 +9,10 @@ const db = createClient({
 })
 
 const now = Math.floor(Date.now() / 1000)
-const kbEndsAt = now + 60    // 1 min
-const mouseEndsAt = now + 90  // 1.5 min
+const kbEndsAt = now + 60       // 1 min
+const mouseEndsAt = now + 90    // 1.5 min
+const milkEndsAt = now + 75     // 1.25 min
+const breadEndsAt = now + 105   // 1.75 min
 
 await db.executeMultiple(`
   DROP TABLE IF EXISTS products;
@@ -33,10 +35,10 @@ await db.execute({
     (1, 'Mechanical Keyboard', 'Clicky tactile switches, TKL layout',       89.99, 69.99, ?, 'tech'),
     (2, 'Wireless Mouse',      'Ergonomic design, 3-month battery life',    49.99, 34.99, ?, 'tech'),
     (3, 'USB-C Monitor',       '27-inch 4K display, 60Hz refresh rate',    349.99, NULL,  NULL, 'tech'),
-    (4, 'Whole Milk',          'Organic, 1 gallon, grass-fed',               5.49, NULL,  NULL, 'groceries'),
-    (5, 'Free-Range Eggs',     'One dozen, cage-free, Grade A',              6.99, NULL,  NULL, 'groceries'),
-    (6, 'Sourdough Bread',     'Artisan loaf, stone-baked',                  7.49, NULL,  NULL, 'groceries')`,
-  args: [kbEndsAt, mouseEndsAt],
+    (4, 'Whole Milk',          'Organic, 1 gallon, grass-fed',               5.49, 3.99, ?, 'groceries'),
+    (5, 'Free-Range Eggs',     'One dozen, cage-free, Grade A',              6.99, NULL, NULL, 'groceries'),
+    (6, 'Sourdough Bread',     'Artisan loaf, stone-baked',                  7.49, 5.49, ?, 'groceries')`,
+  args: [kbEndsAt, mouseEndsAt, milkEndsAt, breadEndsAt],
 })
 
 // Reset carts and cart items for a clean demo
