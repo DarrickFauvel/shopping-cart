@@ -17,7 +17,6 @@
 
   --danger: #dc2626;
   --danger-hover: #b91c1c;
-  --danger-bg: #fee2e2;
 }
 
 :root[data-theme="light"] {
@@ -129,12 +128,36 @@ fieldset {
 .cart {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
   background: var(--surface);
+
+  & .cart-body {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    max-height: 1200px;
+    margin-top: 0.75rem;
+    transition: max-height 0s, margin-top 0s;
+
+    &.empty {
+      max-height: 0;
+      margin-top: 0;
+      transition: max-height 0.3s ease 0.9s, margin-top 0.3s ease 0.9s;
+    }
+  }
 
   & .cart-empty {
     font-size: 0.9rem;
     color: var(--text-muted);
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity 0.2s ease, max-height 0.2s ease;
+
+    &.shown {
+      opacity: 1;
+      max-height: 2rem;
+      transition: opacity 0.4s ease 0.9s, max-height 0.4s ease 0.9s;
+    }
   }
 
   & #cart-list {
@@ -143,7 +166,6 @@ fieldset {
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
   }
 
   & .cart-item {
@@ -155,6 +177,26 @@ fieldset {
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 0.6rem 0.85rem;
+    margin-bottom: 0.4rem;
+    max-height: 120px;
+    opacity: 1;
+    overflow: hidden;
+    transition: max-height 0.6s ease, opacity 0.5s ease, padding 0.6s ease, margin 0.6s ease;
+
+    &:last-child { margin-bottom: 0; }
+
+    &.hidden {
+      max-height: 0;
+      opacity: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      margin-bottom: 0;
+    }
+
+    &:nth-last-child(2) { transition-delay: 0.15s; }
+    &:nth-last-child(3) { transition-delay: 0.3s; }
+    &:nth-last-child(4) { transition-delay: 0.45s; }
+    &:nth-last-child(5) { transition-delay: 0.6s; }
 
     & .cart-item-header {
       display: flex;
@@ -243,97 +285,27 @@ fieldset {
     }
   }
 
-  & .cart-total {
-    display: block;
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--primary-light);
-    border-top: 1px solid var(--border);
-    padding-top: 0.5rem;
-    text-align: right;
-  }
-}
-
-/* Add Product */
-
-.add-product {
-  background: var(--surface);
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-  flex-wrap: wrap;
-
-  & .float-label {
-    position: relative;
-    flex: 1;
-    min-width: 8rem;
-
-    & label {
-      position: absolute;
-      left: 0.75rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--text-dim);
-      font-size: 0.9rem;
-      pointer-events: none;
-      background: var(--surface-deep);
-      padding: 0 0.2rem;
-      line-height: 1;
-      transition: top 0.2s ease, font-size 0.2s ease, color 0.2s ease;
-    }
-
-    &:focus-within label,
-    & label.floating {
-      top: 0;
-      font-size: 0.72rem;
-      color: var(--primary-muted);
-    }
-
-    & input { width: 100%; }
-  }
-
-  & input {
-    flex: 1;
-    min-width: 8rem;
-    height: 2.25rem;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0 0.75rem;
-    font-size: 0.9rem;
-    font-family: inherit;
-    background: var(--surface-deep);
-    color: var(--text);
-
-    &::placeholder { color: var(--text-dim); }
-
-    &:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
-  }
-
-  & button:not(.reseed):not(.reseed-yes):not(.reseed-no) {
-    height: 2.25rem;
-    padding: 0 1.25rem;
-    background: var(--primary);
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    white-space: nowrap;
-
-    &:hover { background: var(--primary-hover); }
-  }
-
-  & .reseed-wrap {
-    margin-left: auto;
+  & .cart-footer {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border);
+    padding-top: 0.5rem;
+    max-height: 0;
+    margin-top: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease, max-height 0.3s ease, margin-top 0.3s ease;
+
+    &.shown {
+      max-height: 60px;
+      margin-top: 0.75rem;
+      opacity: 1;
+      transition: opacity 0.3s ease 0.5s, max-height 0.3s ease 0.5s, margin-top 0.3s ease 0.5s;
+    }
   }
 
-  & .reseed {
+  & .clear-cart {
     background: transparent;
     color: var(--text-muted);
     border: 1px solid var(--border);
@@ -341,38 +313,23 @@ fieldset {
     padding: 0.4rem 0.9rem;
     font-size: 0.85rem;
     cursor: pointer;
-    white-space: nowrap;
 
     &:hover { color: var(--danger); border-color: var(--danger); }
   }
 
-  & .reseed-confirm {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+  & .cart-total {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--primary-light);
+    opacity: 0;
+    transition: opacity 0.3s ease;
 
-    & span { font-size: 0.85rem; color: var(--text-muted); white-space: nowrap; }
-
-    & .reseed-yes {
-      padding: 0.4rem 0.9rem;
-      background: var(--danger);
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      cursor: pointer;
-    }
-
-    & .reseed-no {
-      padding: 0.4rem 0.9rem;
-      background: transparent;
-      color: var(--text-muted);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font-size: 0.85rem;
-      cursor: pointer;
+    &.shown {
+      opacity: 1;
+      transition: opacity 0.3s ease 0.5s;
     }
   }
+
 }
 
 /* Products */
@@ -390,7 +347,6 @@ fieldset {
 }
 
 .product-card {
-  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -406,71 +362,6 @@ fieldset {
     background-color 0.3s ease,
     border-color 0.3s ease,
     color 0.3s ease;
-
-  & .delete {
-    position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    width: 1.5rem;
-    height: 1.5rem;
-    border: none;
-    border-radius: 50%;
-    background: transparent;
-    color: var(--border);
-    font-size: 1.1rem;
-    line-height: 1;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-
-    &:hover {
-      background: var(--danger-bg);
-      color: var(--danger);
-    }
-  }
-
-  & .delete-confirm {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: var(--danger-bg);
-    border-radius: 8px;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.85rem;
-
-    & span {
-      flex: 1;
-      color: var(--danger);
-      font-weight: 500;
-    }
-
-    & .delete-yes {
-      padding: 0.25rem 0.75rem;
-      background: var(--danger);
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      font-weight: 500;
-      cursor: pointer;
-
-      &:hover { background: var(--danger-hover); }
-    }
-
-    & .delete-no {
-      padding: 0.25rem 0.75rem;
-      background: transparent;
-      color: var(--text-muted);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font-size: 0.8rem;
-      cursor: pointer;
-
-      &:hover { background: var(--highlight); }
-    }
-  }
 
   &.highlight {
     background: var(--highlight);
@@ -490,6 +381,14 @@ fieldset {
   & .description {
     font-size: 0.875rem;
     color: var(--text-muted);
+    max-height: 60px;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.25s ease;
+
+    &.collapsed {
+      max-height: 0;
+      opacity: 0;
+    }
   }
 
   & .price {
@@ -564,6 +463,14 @@ fieldset {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    max-height: 320px;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s ease;
+
+    &.collapsed {
+      max-height: 0;
+      opacity: 0;
+    }
   }
 
   &.incart {
@@ -574,7 +481,14 @@ fieldset {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    margin-top: auto;
+    max-height: 60px;
+    overflow: hidden;
+    transition: max-height 0.35s ease, opacity 0.3s ease;
+
+    &.collapsed {
+      max-height: 0;
+      opacity: 0;
+    }
   }
 
   & .remove-from-cart {
