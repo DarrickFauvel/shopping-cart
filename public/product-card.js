@@ -4,11 +4,12 @@ class ProductCard extends HTMLElement {
     this.innerHTML = `
       <article
         class="product-card"
-        data-signals__ifmissing="{name${i}: '', description${i}: '', price${i}: 0, qty${i}: 1, inCart${i}: false, originalPrice${i}: 0, visible${i}: false, countdown${i}: 300}"
+        data-signals__ifmissing="{name${i}: '', description${i}: '', price${i}: 0, qty${i}: 1, inCart${i}: false, originalPrice${i}: 0, visible${i}: false, countdown${i}: 300, saleRestart${i}: 0}"
         data-class="{highlight: $inCart${i}, visible: $visible${i}}"
         data-computed:line-total${i}="$price${i} * $qty${i}"
         data-on-intersect__once="$visible${i} = true"
-        data-on-interval="$countdown${i} > 0 && $countdown${i}--"
+        data-on-interval="($countdown${i} > 0 && $countdown${i}--), ($saleRestart${i} === 1 && @get('/products')), ($saleRestart${i} > 0 && $saleRestart${i}--)"
+        data-effect="$countdown${i} === 0 && $originalPrice${i} > 0 && ($price${i} = $originalPrice${i}, $originalPrice${i} = 0, $saleRestart${i} = 120)"
       >
         <span class="name" data-text="$name${i}"></span>
         <span class="description" data-class="{collapsed: $inCart${i}}" data-text="$description${i}"></span>
@@ -17,6 +18,11 @@ class ProductCard extends HTMLElement {
             data-text="'Sale ends in: ' + Math.floor($countdown${i} / 60) + ':' + String($countdown${i} % 60).padStart(2, '0')"
             data-show="$countdown${i} > 0"
             data-style:color="$countdown${i} > 60 ? 'green' : $countdown${i} > 10 ? 'orange' : 'red'"
+          ></span>
+          <span
+            data-text="'Sale restarts in: ' + Math.floor($saleRestart${i} / 60) + ':' + String($saleRestart${i} % 60).padStart(2, '0')"
+            data-show="$saleRestart${i} > 0"
+            style="color: var(--text-muted)"
           ></span>
           <div class="price-area">
             <span class="sale-badge" data-show="$originalPrice${i} > 0">SALE</span>
