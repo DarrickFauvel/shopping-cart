@@ -14,7 +14,7 @@
   </head>
 
   <body
-    data-signals="{cartCount: 0, saving: false, saved: false, theme: 'dark', themeAnimate: false}"
+    data-signals="{cartCount: 0, theme: 'dark', themeAnimate: false, reseedConfirming: false}"
     data-effect="document.title = 'Shopping Cart' + ($cartCount ? ' (' + $cartCount + ')' : ''); document.documentElement.dataset.theme = $theme"
     data-init="@get('/products')"
   >
@@ -34,43 +34,47 @@
       </button>
     </header>
 
-    <section class="cart">
-      <span data-show="!$cartCount">Your cart is empty</span>
-      <span
-        class="item-count"
-        data-show="$cartCount"
-        data-text="'Cart: ' + $cartCount + ' item' + ($cartCount === 1 ? '' : 's')"
-      ></span>
-    </section>
+    <main>
+      <fieldset class="cart">
+        <legend>Cart</legend>
+        <span class="cart-empty" data-show="!$cartCount">Your cart is empty</span>
+        <ul id="cart-list" data-show="$cartCount"></ul>
+        <div id="cart-total"></div>
+        <div class="cart-footer">
+          <button class="reseed" data-show="!$reseedConfirming" data-on:click="$reseedConfirming = true">Restore Products</button>
+          <div class="reseed-confirm" data-show="$reseedConfirming">
+            <span>Restore initial products?</span>
+            <button class="reseed-yes" data-on:click="@post('/db/reseed')">Reset</button>
+            <button class="reseed-no" data-on:click="$reseedConfirming = false">Cancel</button>
+          </div>
+        </div>
+      </fieldset>
 
-    <section
-      class="add-product"
-      data-signals="{newName: '', newDescription: '', newPrice: 0}"
-    >
-      <div class="float-label">
-        <label for="new-name" data-class="{floating: !!$newName}">Name</label>
-        <input id="new-name" type="text" data-bind:new-name />
-      </div>
-      <div class="float-label">
-        <label for="new-description" data-class="{floating: !!$newDescription}">Description</label>
-        <input id="new-description" type="text" data-bind:new-description />
-      </div>
-      <div class="float-label">
-        <label for="new-price" class="floating">Price</label>
-        <input id="new-price" type="number" min="0" data-bind:new-price />
-      </div>
-      <button data-on:click="@post('/products/add')">Add Product</button>
-    </section>
+      <fieldset
+        class="add-product"
+        data-signals="{newName: '', newDescription: '', newPrice: 0}"
+      >
+        <legend>Add Product</legend>
+        <div class="float-label">
+          <label for="new-name" data-class="{floating: !!$newName}">Name</label>
+          <input id="new-name" type="text" data-bind:new-name />
+        </div>
+        <div class="float-label">
+          <label for="new-description" data-class="{floating: !!$newDescription}">Description</label>
+          <input id="new-description" type="text" data-bind:new-description />
+        </div>
+        <div class="float-label">
+          <label for="new-price" class="floating">Price</label>
+          <input id="new-price" type="number" min="0" data-bind:new-price />
+        </div>
+        <button data-on:click="@post('/products/add')">Add Product</button>
+      </fieldset>
 
-    <div id="product-list"></div>
+      <section class="products">
+        <div id="product-list"></div>
+      </section>
+    </main>
 
-    <section class="cart-actions">
-      <button data-indicator:saving data-on:click="@post('/cart/save')">
-        Save Cart
-      </button>
-      <span data-show="$saving">Saving...</span>
-      <span data-show="$saved && !$saving">Saved!</span>
-    </section>
     <portfolio-drawer>
       <script type="application/json">
       [
