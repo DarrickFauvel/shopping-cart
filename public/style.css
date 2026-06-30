@@ -148,14 +148,99 @@ fieldset {
 
   & .cart-item {
     display: flex;
-    align-items: center;
-    gap: 0.75rem;
+    flex-direction: column;
+    gap: 0.4rem;
     font-size: 0.9rem;
+    background: var(--surface-deep);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.85rem;
 
-    & .cart-item-name { flex: 1; font-weight: 500; }
-    & .cart-item-unit { color: var(--text-muted); }
-    & .cart-item-qty { color: var(--text-muted); }
-    & .cart-item-total { color: var(--primary-light); font-weight: 500; }
+    & .cart-item-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      & .cart-item-name { flex: 1; font-weight: 500; }
+
+      & .cart-item-remove {
+        position: relative;
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0;
+        display: flex;
+        align-items: center;
+
+        &:hover { color: var(--danger); }
+
+        & .cart-item-tooltip {
+          position: absolute;
+          bottom: calc(100% + 6px);
+          right: 0;
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: 5px;
+          padding: 0.2rem 0.5rem;
+          font-size: 0.72rem;
+          white-space: nowrap;
+          color: var(--text);
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.15s ease;
+        }
+
+        &:hover .cart-item-tooltip { opacity: 1; }
+      }
+    }
+
+    & .cart-item-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+
+      & .cart-item-unit { color: var(--text-muted); font-size: 0.85rem; }
+
+      & .cart-item-qty-control {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+
+        & button {
+          width: 1.5rem;
+          height: 1.5rem;
+          border: 1px solid var(--border);
+          border-radius: 4px;
+          background: var(--surface);
+          color: var(--primary-light);
+          font-size: 0.9rem;
+          font-weight: 600;
+          cursor: pointer;
+          line-height: 1;
+          padding: 0;
+
+          &:hover { background: var(--highlight); }
+        }
+
+        & input {
+          width: 2.25rem;
+          height: 1.5rem;
+          border: 1px solid var(--border);
+          border-radius: 4px;
+          text-align: center;
+          font-size: 0.8rem;
+          background: var(--surface);
+          color: var(--text);
+        }
+      }
+
+      & .cart-item-total {
+        margin-left: auto;
+        color: var(--primary-light);
+        font-weight: 600;
+      }
+    }
   }
 
   & .cart-total {
@@ -166,67 +251,6 @@ fieldset {
     border-top: 1px solid var(--border);
     padding-top: 0.5rem;
     text-align: right;
-  }
-
-  & .cart-footer {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  & .reseed {
-    margin-left: auto;
-    background: transparent;
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.6rem 1.25rem;
-    font-size: 0.9rem;
-    cursor: pointer;
-
-    &:hover { color: var(--danger); border-color: var(--danger); }
-  }
-
-  & .reseed-confirm {
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-
-    & span { font-size: 0.85rem; color: var(--text-muted); }
-
-    & .reseed-yes {
-      padding: 0.4rem 0.9rem;
-      background: var(--danger);
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      cursor: pointer;
-    }
-
-    & .reseed-no {
-      padding: 0.4rem 0.9rem;
-      background: transparent;
-      color: var(--text-muted);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font-size: 0.85rem;
-      cursor: pointer;
-    }
-  }
-
-  & button:not(.reseed):not(.reseed-yes):not(.reseed-no) {
-    padding: 0.6rem 1.25rem;
-    background: var(--primary);
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-
-    &:hover { background: var(--primary-hover); }
   }
 }
 
@@ -288,7 +312,7 @@ fieldset {
     }
   }
 
-  & button {
+  & button:not(.reseed):not(.reseed-yes):not(.reseed-no) {
     height: 2.25rem;
     padding: 0 1.25rem;
     background: var(--primary);
@@ -300,8 +324,53 @@ fieldset {
     cursor: pointer;
     white-space: nowrap;
 
-    &:hover {
-      background: var(--primary-hover);
+    &:hover { background: var(--primary-hover); }
+  }
+
+  & .reseed-wrap {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+  }
+
+  & .reseed {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    white-space: nowrap;
+
+    &:hover { color: var(--danger); border-color: var(--danger); }
+  }
+
+  & .reseed-confirm {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    & span { font-size: 0.85rem; color: var(--text-muted); white-space: nowrap; }
+
+    & .reseed-yes {
+      padding: 0.4rem 0.9rem;
+      background: var(--danger);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    & .reseed-no {
+      padding: 0.4rem 0.9rem;
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
     }
   }
 }
