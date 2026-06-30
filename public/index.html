@@ -14,13 +14,18 @@
   </head>
 
   <body
-    data-signals="{cartCount: 0, theme: 'dark', themeAnimate: false, cartId: 'default', groceryCartId: ''}"
-    data-effect="document.title = 'Shopping Cart' + ($cartCount ? ' (' + $cartCount + ')' : ''); document.documentElement.dataset.theme = $theme"
+    data-signals="{cartCount: 0, theme: 'dark', themeAnimate: false, cartId: '', groceryCartId: '', shopperId: ''}"
+    data-effect="document.title = 'Shopping Cart' + ($cartCount ? ' (' + $cartCount + ')' : ''); document.documentElement.dataset.theme = $theme; $shopperId && localStorage.setItem('shopperId', $shopperId)"
     data-init="@get('/products')"
   >
+    <script>
+      const _sid = localStorage.getItem('shopperId')
+      if (_sid) { const b = document.body; const s = JSON.parse(b.dataset.signals); s.shopperId = _sid; b.dataset.signals = JSON.stringify(s) }
+    </script>
     <header class="title-bar">
       <h1>Shopping Cart</h1>
       <span>using Datastar</span>
+      <span class="shopper-badge" data-show="$shopperId !== ''" data-text="$shopperId"></span>
       <button
         class="theme-toggle"
         data-on:click="$theme = $theme === 'dark' ? 'light' : 'dark'; $themeAnimate = true"
@@ -38,16 +43,15 @@
       <nav class="cart-nav">
         <button
           class="cart-tab"
-          data-class="{active: $cartId === 'default'}"
-          data-on:click="$cartId = 'default', @get('/products')"
-        >Main Cart</button>
+          data-class="{active: $cartId === $shopperId}"
+          data-on:click="$cartId = $shopperId, @get('/products')"
+        >Tech Cart</button>
         <button
           class="cart-tab"
           data-show="$groceryCartId !== ''"
           data-class="{active: $cartId === $groceryCartId}"
           data-on:click="$cartId = $groceryCartId, @get('/products')"
-          data-text="$groceryCartId"
-        ></button>
+        >Grocery Cart</button>
         <button
           class="cart-tab cart-tab--new"
           data-show="$groceryCartId === ''"
