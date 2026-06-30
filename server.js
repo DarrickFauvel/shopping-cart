@@ -109,7 +109,7 @@ app.get('/products', async (req, res) => {
 
   await ServerSentEventGenerator.stream(req, res, (stream) => {
     if (!products.length) return
-    const cards = products.map(p => `<product-card card-id="${p.id}"></product-card>`).join('')
+    const cards = products.map(p => `<product-card id="pc-${p.id}" card-id="${p.id}"></product-card>`).join('')
     stream.patchElements(cards, { selector: '#product-list', mode: 'inner' })
     const patchedSignals = {}
     let cartCount = 0
@@ -152,7 +152,7 @@ app.post('/carts/new', async (req, res) => {
 
   await ServerSentEventGenerator.stream(req, res, (stream) => {
     stream.patchSignals(JSON.stringify({ groceryCartId: cartId, cartId }))
-    const cards = products.map(p => `<product-card card-id="${p.id}"></product-card>`).join('')
+    const cards = products.map(p => `<product-card id="pc-${p.id}" card-id="${p.id}"></product-card>`).join('')
     stream.patchElements(cards, { selector: '#product-list', mode: 'inner' })
     const patchedSignals = { cartCount: 0 }
     for (const p of products) {

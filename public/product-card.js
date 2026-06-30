@@ -1,6 +1,10 @@
 class ProductCard extends HTMLElement {
-  connectedCallback() {
+  static get observedAttributes() { return ['card-id'] }
+  attributeChangedCallback() { this.render() }
+  connectedCallback() { this.render() }
+  render() {
     const i = this.getAttribute('card-id')
+    if (!i) return
     this.innerHTML = `
       <article
         class="product-card"
