@@ -4,7 +4,7 @@ class ProductCard extends HTMLElement {
     this.innerHTML = `
       <article
         class="product-card"
-        data-signals__ifmissing="{name${i}: '', description${i}: '', price${i}: 0, qty${i}: 1, inCart${i}: false, originalPrice${i}: 0, visible${i}: false, countdown${i}: 300, saleRestart${i}: 0}"
+        data-signals__ifmissing="{name${i}: '', description${i}: '', price${i}: 0, cartPrice${i}: 0, qty${i}: 1, inCart${i}: false, originalPrice${i}: 0, visible${i}: false, countdown${i}: 300, saleRestart${i}: 0}"
         data-class="{highlight: $inCart${i}, visible: $visible${i}}"
         data-computed:line-total${i}="$price${i} * $qty${i}"
         data-on-intersect__once="$visible${i} = true"
@@ -37,7 +37,7 @@ class ProductCard extends HTMLElement {
           <span class="line-total" data-text="'Total: $' + $lineTotal${i}.toFixed(2)"></span>
           <button
             class="add-to-cart"
-            data-on:click="$cartCount++, $inCart${i} = true, @post('/cart/add/${i}')"
+            data-on:click="$cartPrice${i} = $price${i}, $cartCount++, $inCart${i} = true, @post('/cart/add/${i}')"
             data-text="'Add to Cart'"
           ></button>
         </div>
