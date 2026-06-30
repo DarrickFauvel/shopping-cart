@@ -30,6 +30,7 @@ await db.execute(`
 `)
 try { await db.execute("ALTER TABLE carts ADD COLUMN shopper_id TEXT NOT NULL DEFAULT ''") } catch {}
 try { await db.execute(`ALTER TABLE cart ADD COLUMN cart_id TEXT NOT NULL DEFAULT 'default'`) } catch {}
+try { await db.execute('ALTER TABLE cart ADD COLUMN cart_original_price REAL NOT NULL DEFAULT 0') } catch {}
 try { await db.execute(`ALTER TABLE products ADD COLUMN type TEXT NOT NULL DEFAULT 'tech'`) } catch {}
 
 const ADJECTIVES = ['iron', 'golden', 'swift', 'bright', 'misty', 'wild', 'fuzzy', 'cozy', 'neon', 'dusty', 'crisp', 'bold', 'silver', 'lucky', 'quirky', 'sunny', 'gentle', 'frozen', 'spicy', 'tangy', 'rusty', 'mossy', 'cloudy', 'lemon', 'toasty']
@@ -74,9 +75,9 @@ const cartItemHtml = (id) =>
       <button class="cart-item-remove" data-on:click="$cartCount--, $inCart${id} = false, @delete('/cart/${id}')" aria-label="Remove from cart"><svg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14H6L5 6'/><path d='M10 11v6'/><path d='M14 11v6'/><path d='M9 6V4h6v2'/></svg><span class="cart-item-tooltip">Remove from cart</span></button>
     </div>
     <div class="cart-item-controls">
-      <span class="sale-chip" data-show="$originalPrice${id} > 0">SALE</span>
+      <span class="sale-chip" data-show="$cartOriginalPrice${id} > 0">SALE</span>
       <span class="cart-item-unit" data-text="'$' + $cartPrice${id}.toFixed(2)"></span>
-      <span class="cart-item-was" data-show="$originalPrice${id} > 0" data-text="'was $' + $originalPrice${id}.toFixed(2)"></span>
+      <span class="cart-item-was" data-show="$cartOriginalPrice${id} > 0" data-text="'was $' + $cartOriginalPrice${id}.toFixed(2)"></span>
       <div class="cart-item-qty-control">
         <button data-on:click="$qty${id} > 1 && ($qty${id}--, @post('/cart/add/${id}'))">-</button>
         <input type="number" data-bind:qty${id} data-on:change="@post('/cart/add/${id}')" />
@@ -122,7 +123,7 @@ app.get('/products', async (req, res) => {
   const groceriesCart = shopperCarts.find(c => c.type === 'groceries')
 
   const { rows: cartRows } = await db.execute({
-    sql: 'SELECT product_id, qty, cart_price FROM cart WHERE cart_id = ?',
+    sql: 'SELECT product_id, qty, cart_price, cart_original_price FROM cart WHERE cart_id = ?',
     args: [cartId],
   })
 
@@ -131,7 +132,7 @@ app.get('/products', async (req, res) => {
     args: [cartType],
   })
 
-  const savedCart = Object.fromEntries(cartRows.map(r => [r.product_id, { qty: r.qty, cartPrice: r.cart_price }]))
+  const savedCart = Object.fromEntries(cartRows.map(r => [r.product_id, { qty: r.qty, cartPrice: r.cart_price, cartOriginalPrice: r.cart_original_price }]))
 
   const REINSTATE_SECS = 20
   for (const p of products) {
@@ -159,6 +160,7 @@ app.get('/products', async (req, res) => {
         patchedSignals[`inCart${p.id}`] = true
         patchedSignals[`qty${p.id}`] = savedCart[p.id].qty
         patchedSignals[`cartPrice${p.id}`] = savedCart[p.id].cartPrice
+        patchedSignals[`cartOriginalPrice${p.id}`] = savedCart[p.id].cartOriginalPrice
         cartCount++
       } else {
         patchedSignals[`inCart${p.id}`] = false
@@ -235,10 +237,11 @@ app.post('/cart/add/:id', async (req, res) => {
   if (!success) return res.status(400).send(error)
   const qty = signals[`qty${id}`] ?? 1
   const cartPrice = signals[`cartPrice${id}`] ?? signals[`price${id}`] ?? 0
+  const cartOriginalPrice = signals[`cartOriginalPrice${id}`] ?? 0
   const cartId = signals.cartId ?? 'default'
   await db.execute({
-    sql: 'INSERT OR REPLACE INTO cart (product_id, qty, cart_price, cart_id) VALUES (?, ?, ?, ?)',
-    args: [id, qty, cartPrice, cartId],
+    sql: 'INSERT OR REPLACE INTO cart (product_id, qty, cart_price, cart_original_price, cart_id) VALUES (?, ?, ?, ?, ?)',
+    args: [id, qty, cartPrice, cartOriginalPrice, cartId],
   })
   await ServerSentEventGenerator.stream(req, res, () => {})
 })

@@ -56,6 +56,7 @@ await db.executeMultiple(`
     product_id INTEGER PRIMARY KEY,
     qty INTEGER NOT NULL,
     cart_price REAL NOT NULL DEFAULT 0,
+    cart_original_price REAL NOT NULL DEFAULT 0,
     cart_id TEXT NOT NULL DEFAULT 'default'
   );
 
