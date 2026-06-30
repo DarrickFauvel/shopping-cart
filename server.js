@@ -18,9 +18,35 @@ await db.execute(`
   )
 `)
 try { await db.execute('ALTER TABLE cart ADD COLUMN cart_price REAL NOT NULL DEFAULT 0') } catch {}
-
 try { await db.execute('ALTER TABLE products ADD COLUMN sale_price REAL') } catch {}
 try { await db.execute('ALTER TABLE products ADD COLUMN sale_ends_at INTEGER') } catch {}
+
+await db.execute(`
+  CREATE TABLE IF NOT EXISTS carts (
+    cart_id TEXT PRIMARY KEY,
+    type TEXT NOT NULL DEFAULT 'tech',
+    created_at INTEGER NOT NULL
+  )
+`)
+await db.execute({
+  sql: `INSERT OR IGNORE INTO carts (cart_id, type, created_at) VALUES ('default', 'tech', ?)`,
+  args: [Math.floor(Date.now() / 1000)],
+})
+try { await db.execute(`ALTER TABLE cart ADD COLUMN cart_id TEXT NOT NULL DEFAULT 'default'`) } catch {}
+try { await db.execute(`ALTER TABLE products ADD COLUMN type TEXT NOT NULL DEFAULT 'tech'`) } catch {}
+
+const ADJECTIVES = ['iron', 'golden', 'swift', 'bright', 'misty', 'wild', 'fuzzy', 'cozy', 'neon', 'dusty', 'crisp', 'bold', 'silver', 'lucky', 'quirky', 'sunny', 'gentle', 'frozen', 'spicy', 'tangy', 'rusty', 'mossy', 'cloudy', 'lemon', 'toasty']
+const NOUNS = ['otter', 'falcon', 'river', 'stone', 'berry', 'maple', 'cedar', 'anchor', 'ember', 'lantern', 'walnut', 'canyon', 'cobalt', 'pebble', 'goblin', 'clover', 'turnip', 'muffin', 'kettle', 'badger', 'pickle', 'satchel', 'biscuit', 'rambler', 'drifter']
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)] }
+
+async function uniqueCartId() {
+  while (true) {
+    const id = `${pick(ADJECTIVES)}-${pick(NOUNS)}`
+    const { rows } = await db.execute({ sql: 'SELECT 1 FROM carts WHERE cart_id = ?', args: [id] })
+    if (!rows.length) return id
+  }
+}
 
 const app = express()
 app.use(express.static('public'))
@@ -54,13 +80,24 @@ const cartItemHtml = (id) =>
   </li>`
 
 app.get('/products', async (req, res) => {
-  const [{ rows: products }, { rows: cartRows }] = await Promise.all([
-    db.execute('SELECT id, name, description, price, sale_price, sale_ends_at FROM products ORDER BY id'),
-    db.execute('SELECT product_id, qty, cart_price FROM cart'),
+  const { success, signals } = await ServerSentEventGenerator.readSignals(req)
+  const cartId = (success && signals?.cartId) ? signals.cartId : 'default'
+
+  const [{ rows: allCarts }, { rows: cartRows }] = await Promise.all([
+    db.execute('SELECT cart_id, type FROM carts ORDER BY created_at'),
+    db.execute({ sql: 'SELECT product_id, qty, cart_price FROM cart WHERE cart_id = ?', args: [cartId] }),
   ])
+
+  const cartType = allCarts.find(c => c.cart_id === cartId)?.type ?? 'tech'
+  const groceriesCart = allCarts.find(c => c.type === 'groceries')
+
+  const { rows: products } = await db.execute({
+    sql: 'SELECT id, name, description, price, sale_price, sale_ends_at FROM products WHERE type = ? ORDER BY id',
+    args: [cartType],
+  })
+
   const savedCart = Object.fromEntries(cartRows.map(r => [r.product_id, { qty: r.qty, cartPrice: r.cart_price }]))
 
-  // Auto-reinstate expired sales for demo (2-min countdown)
   const now = Math.floor(Date.now() / 1000)
   const REINSTATE_SECS = 20
   for (const p of products) {
@@ -74,30 +111,64 @@ app.get('/products', async (req, res) => {
     if (!products.length) return
     const cards = products.map(p => `<product-card card-id="${p.id}"></product-card>`).join('')
     stream.patchElements(cards, { selector: '#product-list', mode: 'inner' })
-    const signals = {}
+    const patchedSignals = {}
     let cartCount = 0
     for (const p of products) {
       const saleActive = p.sale_price != null && p.sale_ends_at != null && p.sale_ends_at > now
-      signals[`name${p.id}`] = p.name
-      signals[`description${p.id}`] = p.description
-      signals[`price${p.id}`] = saleActive ? p.sale_price : p.price
-      signals[`originalPrice${p.id}`] = saleActive ? p.price : 0
-      signals[`countdown${p.id}`] = saleActive ? p.sale_ends_at - now : 0
+      patchedSignals[`name${p.id}`] = p.name
+      patchedSignals[`description${p.id}`] = p.description
+      patchedSignals[`price${p.id}`] = saleActive ? p.sale_price : p.price
+      patchedSignals[`originalPrice${p.id}`] = saleActive ? p.price : 0
+      patchedSignals[`countdown${p.id}`] = saleActive ? p.sale_ends_at - now : 0
       if (savedCart[p.id] !== undefined) {
-        signals[`inCart${p.id}`] = true
-        signals[`qty${p.id}`] = savedCart[p.id].qty
-        signals[`cartPrice${p.id}`] = savedCart[p.id].cartPrice
+        patchedSignals[`inCart${p.id}`] = true
+        patchedSignals[`qty${p.id}`] = savedCart[p.id].qty
+        patchedSignals[`cartPrice${p.id}`] = savedCart[p.id].cartPrice
         cartCount++
+      } else {
+        patchedSignals[`inCart${p.id}`] = false
       }
     }
-    signals.cartCount = cartCount
-    stream.patchSignals(JSON.stringify(signals))
+    patchedSignals.cartCount = cartCount
+    if (groceriesCart) patchedSignals.groceryCartId = groceriesCart.cart_id
+    stream.patchSignals(JSON.stringify(patchedSignals))
     const cartItems = products.map(p => cartItemHtml(p.id)).join('')
     stream.patchElements(cartItems, { selector: '#cart-list', mode: 'inner' })
     stream.patchElements(cartTotalHtml(products.map(p => p.id)), { selector: '#cart-total', mode: 'inner' })
   })
 })
 
+app.post('/carts/new', async (req, res) => {
+  const cartId = await uniqueCartId()
+  const now = Math.floor(Date.now() / 1000)
+  await db.execute({
+    sql: `INSERT INTO carts (cart_id, type, created_at) VALUES (?, 'groceries', ?)`,
+    args: [cartId, now],
+  })
+
+  const { rows: products } = await db.execute(
+    `SELECT id, name, description, price FROM products WHERE type = 'groceries' ORDER BY id`
+  )
+
+  await ServerSentEventGenerator.stream(req, res, (stream) => {
+    stream.patchSignals(JSON.stringify({ groceryCartId: cartId, cartId }))
+    const cards = products.map(p => `<product-card card-id="${p.id}"></product-card>`).join('')
+    stream.patchElements(cards, { selector: '#product-list', mode: 'inner' })
+    const patchedSignals = { cartCount: 0 }
+    for (const p of products) {
+      patchedSignals[`name${p.id}`] = p.name
+      patchedSignals[`description${p.id}`] = p.description
+      patchedSignals[`price${p.id}`] = p.price
+      patchedSignals[`originalPrice${p.id}`] = 0
+      patchedSignals[`countdown${p.id}`] = 0
+      patchedSignals[`inCart${p.id}`] = false
+    }
+    stream.patchSignals(JSON.stringify(patchedSignals))
+    const cartItems = products.map(p => cartItemHtml(p.id)).join('')
+    stream.patchElements(cartItems, { selector: '#cart-list', mode: 'inner' })
+    stream.patchElements(cartTotalHtml(products.map(p => p.id)), { selector: '#cart-total', mode: 'inner' })
+  })
+})
 
 app.get('/products/refresh', async (req, res) => {
   const { rows: products } = await db.execute('SELECT id, price, sale_price, sale_ends_at FROM products ORDER BY id')
@@ -110,15 +181,15 @@ app.get('/products/refresh', async (req, res) => {
     }
   }
   await ServerSentEventGenerator.stream(req, res, (stream) => {
-    const signals = {}
+    const patchedSignals = {}
     for (const p of products) {
       const saleActive = p.sale_price != null && p.sale_ends_at != null && p.sale_ends_at > now
-      signals[`price${p.id}`] = saleActive ? p.sale_price : p.price
-      signals[`originalPrice${p.id}`] = saleActive ? p.price : 0
-      signals[`countdown${p.id}`] = saleActive ? p.sale_ends_at - now : 0
-      signals[`saleRestart${p.id}`] = 0
+      patchedSignals[`price${p.id}`] = saleActive ? p.sale_price : p.price
+      patchedSignals[`originalPrice${p.id}`] = saleActive ? p.price : 0
+      patchedSignals[`countdown${p.id}`] = saleActive ? p.sale_ends_at - now : 0
+      patchedSignals[`saleRestart${p.id}`] = 0
     }
-    stream.patchSignals(JSON.stringify(signals))
+    stream.patchSignals(JSON.stringify(patchedSignals))
   })
 })
 
@@ -128,28 +199,35 @@ app.post('/cart/add/:id', async (req, res) => {
   if (!success) return res.status(400).send(error)
   const qty = signals[`qty${id}`] ?? 1
   const cartPrice = signals[`cartPrice${id}`] ?? signals[`price${id}`] ?? 0
+  const cartId = signals.cartId ?? 'default'
   await db.execute({
-    sql: 'INSERT OR REPLACE INTO cart (product_id, qty, cart_price) VALUES (?, ?, ?)',
-    args: [id, qty, cartPrice],
+    sql: 'INSERT OR REPLACE INTO cart (product_id, qty, cart_price, cart_id) VALUES (?, ?, ?, ?)',
+    args: [id, qty, cartPrice, cartId],
   })
   await ServerSentEventGenerator.stream(req, res, () => {})
 })
 
 app.delete('/cart/:id', async (req, res) => {
   const { id } = req.params
-  await db.execute({ sql: 'DELETE FROM cart WHERE product_id = ?', args: [id] })
+  const { success, signals } = await ServerSentEventGenerator.readSignals(req)
+  const cartId = (success && signals?.cartId) ? signals.cartId : 'default'
+  await db.execute({ sql: 'DELETE FROM cart WHERE product_id = ? AND cart_id = ?', args: [id, cartId] })
   await ServerSentEventGenerator.stream(req, res, () => {})
 })
 
 app.delete('/cart', async (req, res) => {
-  const { rows: cartRows } = await db.execute('SELECT product_id FROM cart')
-  await db.execute('DELETE FROM cart')
+  const { success, signals } = await ServerSentEventGenerator.readSignals(req)
+  const cartId = (success && signals?.cartId) ? signals.cartId : 'default'
+  const { rows: cartRows } = await db.execute({
+    sql: 'SELECT product_id FROM cart WHERE cart_id = ?',
+    args: [cartId],
+  })
+  await db.execute({ sql: 'DELETE FROM cart WHERE cart_id = ?', args: [cartId] })
   await ServerSentEventGenerator.stream(req, res, (stream) => {
-    const signals = { cartCount: 0 }
-    for (const r of cartRows) signals[`cartHiding${r.product_id}`] = true
-    stream.patchSignals(JSON.stringify(signals))
+    const patchedSignals = { cartCount: 0 }
+    for (const r of cartRows) patchedSignals[`cartHiding${r.product_id}`] = true
+    stream.patchSignals(JSON.stringify(patchedSignals))
   })
 })
-
 
 app.listen(3000, () => console.log('Server running at http://localhost:3000'))
