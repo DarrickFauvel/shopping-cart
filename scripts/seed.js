@@ -46,11 +46,11 @@ await db.executeMultiple(`
   CREATE TABLE IF NOT EXISTS carts (
     cart_id TEXT PRIMARY KEY,
     type TEXT NOT NULL DEFAULT 'tech',
+    shopper_id TEXT NOT NULL DEFAULT '',
     created_at INTEGER NOT NULL
   );
 
   DELETE FROM carts;
-  INSERT INTO carts (cart_id, type, created_at) VALUES ('default', 'tech', ${now});
 
   CREATE TABLE IF NOT EXISTS cart (
     product_id INTEGER PRIMARY KEY,

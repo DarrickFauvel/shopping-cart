@@ -28,10 +28,7 @@ await db.execute(`
     created_at INTEGER NOT NULL
   )
 `)
-await db.execute({
-  sql: `INSERT OR IGNORE INTO carts (cart_id, type, created_at) VALUES ('default', 'tech', ?)`,
-  args: [Math.floor(Date.now() / 1000)],
-})
+try { await db.execute("ALTER TABLE carts ADD COLUMN shopper_id TEXT NOT NULL DEFAULT ''") } catch {}
 try { await db.execute(`ALTER TABLE cart ADD COLUMN cart_id TEXT NOT NULL DEFAULT 'default'`) } catch {}
 try { await db.execute(`ALTER TABLE products ADD COLUMN type TEXT NOT NULL DEFAULT 'tech'`) } catch {}
 
@@ -43,6 +40,16 @@ function pick(arr) { return arr[Math.floor(Math.random() * arr.length)] }
 async function uniqueCartId() {
   while (true) {
     const id = `${pick(ADJECTIVES)}-${pick(NOUNS)}`
+    const { rows } = await db.execute({ sql: 'SELECT 1 FROM carts WHERE cart_id = ?', args: [id] })
+    if (!rows.length) return id
+  }
+}
+
+const ANIMALS = ['koala', 'panda', 'gecko', 'lemur', 'moose', 'quokka', 'wombat', 'ferret', 'newt', 'sloth', 'tapir', 'capybara', 'iguana', 'manatee', 'walrus', 'narwhal', 'platypus', 'axolotl', 'numbat', 'quoll']
+
+async function uniqueShopperId() {
+  while (true) {
+    const id = `${pick(ADJECTIVES)}-${pick(ANIMALS)}`
     const { rows } = await db.execute({ sql: 'SELECT 1 FROM carts WHERE cart_id = ?', args: [id] })
     if (!rows.length) return id
   }
@@ -81,15 +88,43 @@ const cartItemHtml = (id) =>
 
 app.get('/products', async (req, res) => {
   const { success, signals } = await ServerSentEventGenerator.readSignals(req)
-  const cartId = (success && signals?.cartId) ? signals.cartId : 'default'
+  let shopperId = (success && signals?.shopperId) || ''
+  const now = Math.floor(Date.now() / 1000)
 
-  const [{ rows: allCarts }, { rows: cartRows }] = await Promise.all([
-    db.execute('SELECT cart_id, type FROM carts ORDER BY created_at'),
-    db.execute({ sql: 'SELECT product_id, qty, cart_price FROM cart WHERE cart_id = ?', args: [cartId] }),
-  ])
+  if (!shopperId) {
+    shopperId = await uniqueShopperId()
+    await db.execute({
+      sql: `INSERT INTO carts (cart_id, type, shopper_id, created_at) VALUES (?, 'tech', ?, ?)`,
+      args: [shopperId, shopperId, now],
+    })
+  } else {
+    const { rows } = await db.execute({
+      sql: `SELECT 1 FROM carts WHERE shopper_id = ? AND type = 'tech'`,
+      args: [shopperId],
+    })
+    if (!rows.length) {
+      await db.execute({
+        sql: `INSERT INTO carts (cart_id, type, shopper_id, created_at) VALUES (?, 'tech', ?, ?)`,
+        args: [shopperId, shopperId, now],
+      })
+    }
+  }
 
-  const cartType = allCarts.find(c => c.cart_id === cartId)?.type ?? 'tech'
-  const groceriesCart = allCarts.find(c => c.type === 'groceries')
+  const { rows: shopperCarts } = await db.execute({
+    sql: 'SELECT cart_id, type FROM carts WHERE shopper_id = ? ORDER BY created_at',
+    args: [shopperId],
+  })
+
+  const incomingCartId = (success && signals?.cartId) || ''
+  const activeCart = shopperCarts.find(c => c.cart_id === incomingCartId) ?? shopperCarts.find(c => c.type === 'tech')
+  const cartId = activeCart?.cart_id ?? shopperId
+  const cartType = activeCart?.type ?? 'tech'
+  const groceriesCart = shopperCarts.find(c => c.type === 'groceries')
+
+  const { rows: cartRows } = await db.execute({
+    sql: 'SELECT product_id, qty, cart_price FROM cart WHERE cart_id = ?',
+    args: [cartId],
+  })
 
   const { rows: products } = await db.execute({
     sql: 'SELECT id, name, description, price, sale_price, sale_ends_at FROM products WHERE type = ? ORDER BY id',
@@ -98,7 +133,6 @@ app.get('/products', async (req, res) => {
 
   const savedCart = Object.fromEntries(cartRows.map(r => [r.product_id, { qty: r.qty, cartPrice: r.cart_price }]))
 
-  const now = Math.floor(Date.now() / 1000)
   const REINSTATE_SECS = 20
   for (const p of products) {
     if (p.sale_price != null && (p.sale_ends_at == null || p.sale_ends_at <= now)) {
@@ -111,7 +145,8 @@ app.get('/products', async (req, res) => {
     if (!products.length) return
     const cards = products.map(p => `<product-card id="pc-${p.id}" card-id="${p.id}"></product-card>`).join('')
     stream.patchElements(cards, { selector: '#product-list', mode: 'inner' })
-    const patchedSignals = {}
+    const patchedSignals = { shopperId, cartId }
+    if (groceriesCart) patchedSignals.groceryCartId = groceriesCart.cart_id
     let cartCount = 0
     for (const p of products) {
       const saleActive = p.sale_price != null && p.sale_ends_at != null && p.sale_ends_at > now
@@ -130,7 +165,6 @@ app.get('/products', async (req, res) => {
       }
     }
     patchedSignals.cartCount = cartCount
-    if (groceriesCart) patchedSignals.groceryCartId = groceriesCart.cart_id
     stream.patchSignals(JSON.stringify(patchedSignals))
     const cartItems = products.map(p => cartItemHtml(p.id)).join('')
     stream.patchElements(cartItems, { selector: '#cart-list', mode: 'inner' })
@@ -139,11 +173,13 @@ app.get('/products', async (req, res) => {
 })
 
 app.post('/carts/new', async (req, res) => {
+  const { success, signals } = await ServerSentEventGenerator.readSignals(req)
+  const shopperId = (success && signals?.shopperId) || ''
   const cartId = await uniqueCartId()
   const now = Math.floor(Date.now() / 1000)
   await db.execute({
-    sql: `INSERT INTO carts (cart_id, type, created_at) VALUES (?, 'groceries', ?)`,
-    args: [cartId, now],
+    sql: `INSERT INTO carts (cart_id, type, shopper_id, created_at) VALUES (?, 'groceries', ?, ?)`,
+    args: [cartId, shopperId, now],
   })
 
   const { rows: products } = await db.execute(
