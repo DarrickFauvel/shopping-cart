@@ -5,7 +5,6 @@ class ProductCard extends HTMLElement {
       <article
         class="product-card"
         data-signals__ifmissing="{name${i}: '', description${i}: '', price${i}: 0, qty${i}: 1, inCart${i}: false, originalPrice${i}: 0, visible${i}: false, countdown${i}: 300}"
-        data-init="$originalPrice${i} = $price${i}"
         data-class="{highlight: $inCart${i}, visible: $visible${i}}"
         data-computed:line-total${i}="$price${i} * $qty${i}"
         data-on-intersect__once="$visible${i} = true"
@@ -19,8 +18,11 @@ class ProductCard extends HTMLElement {
             data-show="$countdown${i} > 0"
             data-style:color="$countdown${i} > 60 ? 'green' : $countdown${i} > 10 ? 'orange' : 'red'"
           ></span>
-          <span class="price" data-text="'$' + $price${i}.toFixed(2)"></span>
-          <span data-text="'Original: $' + $originalPrice${i}"></span>
+          <div class="price-area">
+            <span class="sale-badge" data-show="$originalPrice${i} > 0">SALE</span>
+            <span class="price" data-text="'$' + $price${i}.toFixed(2)"></span>
+            <span class="original-price" data-show="$originalPrice${i} > 0" data-text="'was $' + $originalPrice${i}.toFixed(2)"></span>
+          </div>
           <div class="quantity-control">
             <button data-on:click="$qty${i} > 1 && $qty${i}--">-</button>
             <input type="number" data-bind:qty${i} />

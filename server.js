@@ -17,6 +17,9 @@ await db.execute(`
   )
 `)
 
+try { await db.execute('ALTER TABLE products ADD COLUMN sale_price REAL') } catch {}
+try { await db.execute('ALTER TABLE products ADD COLUMN sale_ends_at INTEGER') } catch {}
+
 const app = express()
 app.use(express.static('public'))
 
@@ -36,7 +39,9 @@ const cartItemHtml = (id) =>
       <button class="cart-item-remove" data-on:click="$cartCount--, $inCart${id} = false, @delete('/cart/${id}')" aria-label="Remove from cart"><svg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14H6L5 6'/><path d='M10 11v6'/><path d='M14 11v6'/><path d='M9 6V4h6v2'/></svg><span class="cart-item-tooltip">Remove from cart</span></button>
     </div>
     <div class="cart-item-controls">
+      <span class="sale-chip" data-show="$originalPrice${id} > 0">SALE</span>
       <span class="cart-item-unit" data-text="'$' + $price${id}.toFixed(2)"></span>
+      <span class="cart-item-was" data-show="$originalPrice${id} > 0" data-text="'was $' + $originalPrice${id}.toFixed(2)"></span>
       <div class="cart-item-qty-control">
         <button data-on:click="$qty${id} > 1 && ($qty${id}--, @post('/cart/add/${id}'))">-</button>
         <input type="number" data-bind:qty${id} data-on:change="@post('/cart/add/${id}')" />
@@ -48,7 +53,7 @@ const cartItemHtml = (id) =>
 
 app.get('/products', async (req, res) => {
   const [{ rows: products }, { rows: cartRows }] = await Promise.all([
-    db.execute('SELECT id, name, description, price FROM products ORDER BY id'),
+    db.execute('SELECT id, name, description, price, sale_price, sale_ends_at FROM products ORDER BY id'),
     db.execute('SELECT product_id, qty FROM cart'),
   ])
   const savedCart = Object.fromEntries(cartRows.map(r => [r.product_id, r.qty]))
@@ -58,11 +63,15 @@ app.get('/products', async (req, res) => {
     const cards = products.map(p => `<product-card card-id="${p.id}"></product-card>`).join('')
     stream.patchElements(cards, { selector: '#product-list', mode: 'inner' })
     const signals = {}
+    const now = Math.floor(Date.now() / 1000)
     let cartCount = 0
     for (const p of products) {
+      const saleActive = p.sale_price != null && p.sale_ends_at != null && p.sale_ends_at > now
       signals[`name${p.id}`] = p.name
       signals[`description${p.id}`] = p.description
-      signals[`price${p.id}`] = p.price
+      signals[`price${p.id}`] = saleActive ? p.sale_price : p.price
+      signals[`originalPrice${p.id}`] = saleActive ? p.price : 0
+      signals[`countdown${p.id}`] = saleActive ? p.sale_ends_at - now : 0
       if (savedCart[p.id] !== undefined) {
         signals[`inCart${p.id}`] = true
         signals[`qty${p.id}`] = savedCart[p.id]
