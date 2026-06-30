@@ -8,7 +8,7 @@ class ProductCard extends HTMLElement {
         data-class="{highlight: $inCart${i}, visible: $visible${i}}"
         data-computed:line-total${i}="$price${i} * $qty${i}"
         data-on-intersect__once="$visible${i} = true"
-        data-on-interval="($countdown${i} > 0 && $countdown${i}--), ($saleRestart${i} === 1 && @get('/products')), ($saleRestart${i} > 0 && $saleRestart${i}--)"
+        data-on-interval="($countdown${i} > 0 && $countdown${i}--), ($saleRestart${i} === 1 && @get('/products/refresh')), ($saleRestart${i} > 0 && $saleRestart${i}--)"
         data-effect="$countdown${i} === 0 && $originalPrice${i} > 0 && ($price${i} = $originalPrice${i}, $originalPrice${i} = 0, $saleRestart${i} = 20)"
       >
         <span class="name" data-text="$name${i}"></span>
